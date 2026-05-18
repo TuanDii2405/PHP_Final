@@ -60,9 +60,11 @@ class StudentExamService {
         $id_dethi = $kythi['ID_MaDeThi'];
         $diem_4pa = 0.0; $diem_ds = 0.0; $diem_ngan = 0.0;
 
-        // Chấm Phần 1
+        // --- Chấm Phần 1 ---
         if (!empty($student_answers['phan1'])) {
-            $correct_4pa = DB::table('De_Thi_Chi_Tiet')->where('ID_MaDeThi', $id_dethi)->whereNotNull('ID_TracNghiem4PhuongAn')
+            $correct_4pa = DB::table('De_Thi_Chi_Tiet')
+                ->where('ID_MaDeThi', $id_dethi)
+                ->whereNotNull('De_Thi_Chi_Tiet.ID_TracNghiem4PhuongAn') // Cập nhật: Thêm tiền tố De_Thi_Chi_Tiet
                 ->join('Cau_hoi_trac_nghiem_4_phuong_an', 'De_Thi_Chi_Tiet.ID_TracNghiem4PhuongAn', '=', 'Cau_hoi_trac_nghiem_4_phuong_an.ID_TracNghiem4PhuongAn')
                 ->pluck('DapAn_TracNghiem4PhuongAn', 'De_Thi_Chi_Tiet.ID_TracNghiem4PhuongAn')->toArray();
 
@@ -73,9 +75,11 @@ class StudentExamService {
             }
         }
 
-        // Chấm Phần 2
+        // --- Chấm Phần 2 ---
         if (!empty($student_answers['phan2'])) {
-            $correct_ds = DB::table('De_Thi_Chi_Tiet')->where('ID_MaDeThi', $id_dethi)->whereNotNull('ID_TracNghiemDungSai')
+            $correct_ds = DB::table('De_Thi_Chi_Tiet')
+                ->where('ID_MaDeThi', $id_dethi)
+                ->whereNotNull('De_Thi_Chi_Tiet.ID_TracNghiemDungSai') // Cập nhật: Thêm tiền tố De_Thi_Chi_Tiet
                 ->join('Cau_hoi_trac_nghiem_dung_sai', 'De_Thi_Chi_Tiet.ID_TracNghiemDungSai', '=', 'Cau_hoi_trac_nghiem_dung_sai.ID_TracNghiemDungSai')
                 ->pluck('DapAn_TracNghiem4PhuongAn', 'De_Thi_Chi_Tiet.ID_TracNghiemDungSai')->toArray();
 
@@ -86,9 +90,11 @@ class StudentExamService {
             }
         }
 
-        // Chấm Phần 3
+        // --- Chấm Phần 3 ---
         if (!empty($student_answers['phan3'])) {
-            $correct_ngan = DB::table('De_Thi_Chi_Tiet')->where('ID_MaDeThi', $id_dethi)->whereNotNull('ID_TracNghiemTraLoiNgan')
+            $correct_ngan = DB::table('De_Thi_Chi_Tiet')
+                ->where('ID_MaDeThi', $id_dethi)
+                ->whereNotNull('De_Thi_Chi_Tiet.ID_TracNghiemTraLoiNgan') // Cập nhật: Thêm tiền tố De_Thi_Chi_Tiet
                 ->join('Cau_hoi_tra_loi_ngan', 'De_Thi_Chi_Tiet.ID_TracNghiemTraLoiNgan', '=', 'Cau_hoi_tra_loi_ngan.ID_TracNghiemTraLoiNgan')
                 ->selectRaw('De_Thi_Chi_Tiet.ID_TracNghiemTraLoiNgan as id, CONCAT(KiTuThu1CuaDapAn_TracNghiemTraLoiNgan, KiTuThu2CuaDapAn_TracNghiemTraLoiNgan, KiTuThu3CuaDapAn_TracNghiemTraLoiNgan, KiTuThu4CuaDapAn_TracNghiemTraLoiNgan) as dapan')
                 ->pluck('dapan', 'id')->toArray();

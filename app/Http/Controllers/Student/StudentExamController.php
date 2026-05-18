@@ -35,10 +35,10 @@ class StudentExamController extends Controller {
     // Hiển thị giao diện làm bài
     public function loadExam(Request $request) {
         $id_kythi = $request->query('id_kythi');
-        if (!$id_kythi) return redirect('student.ky-thi')->with('error', 'Không tìm thấy mã kỳ thi.');
+        if (!$id_kythi) return redirect()->route('student.ky-thi')->with('success', 'Nộp bài thành công!');
 
         $kythi = $this->examService->getThongTinKyThi($id_kythi);
-        if (!$kythi) return redirect('student.ky-thi')->with('error', 'Kỳ thi không tồn tại.');
+        if (!$kythi) return redirect()->route('student.ky-thi')->with('error', 'Kỳ thi không tồn tại.');
 
         $cau_hoi = $this->examService->getCauHoiDeThi($kythi['ID_MaDeThi']);
 
@@ -62,7 +62,7 @@ class StudentExamController extends Controller {
                 $request->time_start, 
                 $request->time_spent
             );
-            return redirect('/student/danh-sach-ky-thi')->with('success', 'Nộp bài thành công!');
+            return redirect()->route('student.ky-thi')->with('success', 'Nộp bài thành công!');
         } catch (\Exception $e) {
             return back()->with('error', 'Lỗi hệ thống: ' . $e->getMessage());
         }
