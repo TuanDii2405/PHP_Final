@@ -45,7 +45,7 @@
                             <td>{{ $kt->SoCauHoiTracNghiem4PhuongAn_KyThi }}|{{ $kt->SoCauHoiTracNghiemDungSai_KyThi }}|{{ $kt->SoCauHoiTracNghiemTraLoiNgan_KyThi }}</td>
                             <td>
                                 @if ($dangMo)
-                                    <a class="tbl-link" onclick="alert('Bắt đầu tham gia thi!')">Tham gia thi</a>
+                                    <a class="tbl-link" href="{{ route('student.tham-gia-thi', ['id_kythi' => $kt->ID_KyThi]) }}">Tham gia thi</a>
                                 @else
                                     <span style="color:#aaa;font-size:12px">{{ $batDau && $now->lt($batDau) ? 'Chưa mở' : 'Đã kết thúc' }}</span>
                                 @endif

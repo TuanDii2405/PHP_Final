@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Student\StudentController;
+use App\Http\Controllers\Student\StudentExamController;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect
@@ -90,4 +91,7 @@ Route::prefix('hoc-sinh')->name('student.')->middleware(['auth.check', 'role:stu
     Route::get('/diem-danh',   [StudentController::class, 'diemDanh'])->name('diem-danh');
     Route::get('/thong-tin',   [StudentController::class, 'thongTin'])->name('thong-tin');
     Route::get('/xep-hang',    [StudentController::class, 'xepHang'])->name('xep-hang');
+
+    Route::get('/tham-gia-thi',  [StudentExamController::class, 'loadExam'])->name('tham-gia-thi');
+    Route::post('/tham-gia-thi', [StudentExamController::class, 'submitExam'])->name('nop-bai-thi');
 });
