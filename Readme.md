@@ -228,7 +228,7 @@ Mở trình duyệt, truy cập: `http://127.0.0.1:8000`
 | Vai trò   | Tên đăng nhập | Mật khẩu   |
 | --------- | ------------- | ---------- |
 | Admin     | `admin`       | `admin123` |
-| Giáo viên | `giaovien`    | `gv123`    |
+| Giáo viên | `giaovien`    | `gv1234`    |
 | Học sinh  | `hocsinh`     | `hs123`    |
 
 > Có thể đăng nhập bằng **email** hoặc **số điện thoại** của bất kỳ tài khoản nào trong database.
