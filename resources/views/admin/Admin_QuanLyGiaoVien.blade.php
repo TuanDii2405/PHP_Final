@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -61,6 +61,8 @@
                             <td>
                                 @if ($gv->TrangThaiHoatDong_User === 'active')
                                     <span class="badge badge-active">Hoạt động</span>
+                                @elseif ($gv->TrangThaiHoatDong_User === 'pending')
+                                    <span class="badge badge-pending">Chờ duyệt</span>
                                 @elseif ($gv->TrangThaiHoatDong_User === 'locked')
                                     <span class="badge badge-locked">Bị khóa</span>
                                 @else
@@ -68,33 +70,50 @@
                                 @endif
                             </td>
                             <td style="white-space:nowrap">
-                                <form method="POST"
-                                      action="{{ route('admin.impersonate', $gv->ID_User) }}"
-                                      style="display:inline"
-                                      onsubmit="return confirm('Đăng nhập vào tài khoản của {{ addslashes($gv->HoVaTen_User) }}?')">
-                                    @csrf
-                                    <button type="submit" class="btn-edit">Xem</button>
-                                </form>
+                                @if ($gv->TrangThaiHoatDong_User === 'pending')
+                                    <form method="POST"
+                                          action="{{ route('admin.giao-vien.duyet', $gv->ID_User) }}"
+                                          style="display:inline">
+                                        @csrf
+                                        <button type="submit" class="btn-approve">Duyệt</button>
+                                    </form>
+                                    <form method="POST"
+                                          action="{{ route('admin.giao-vien.tu-choi', $gv->ID_User) }}"
+                                          style="display:inline"
+                                          onsubmit="return confirm('Từ chối và xóa tài khoản {{ addslashes($gv->HoVaTen_User) }}?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-danger">Từ chối</button>
+                                    </form>
+                                @else
+                                    <form method="POST"
+                                          action="{{ route('admin.impersonate', $gv->ID_User) }}"
+                                          style="display:inline"
+                                          onsubmit="return confirm('Đăng nhập vào tài khoản của {{ addslashes($gv->HoVaTen_User) }}?')">
+                                        @csrf
+                                        <button type="submit" class="btn-edit">Xem</button>
+                                    </form>
 
-                                <button class="btn-edit" onclick="openEdit(
-                                    {{ $gv->ID_User }},
-                                    '{{ addslashes($gv->HoVaTen_User) }}',
-                                    '{{ $gv->EmailCaNhan_User ?? '' }}',
-                                    '{{ $gv->SoDienThoai_User ?? '' }}',
-                                    '{{ $gv->NgayThangNamSinh_User ?? '' }}',
-                                    '{{ $gv->TrangThaiHoatDong_User }}',
-                                    '{{ $gv->PhuTrachMon_User ?? '' }}',
-                                    '{{ $gv->PhuTrachKhoi_User ?? '' }}'
-                                )">Sửa</button>
+                                    <button class="btn-edit" onclick="openEdit(
+                                        {{ $gv->ID_User }},
+                                        '{{ addslashes($gv->HoVaTen_User) }}',
+                                        '{{ $gv->EmailCaNhan_User ?? '' }}',
+                                        '{{ $gv->SoDienThoai_User ?? '' }}',
+                                        '{{ $gv->NgayThangNamSinh_User ?? '' }}',
+                                        '{{ $gv->TrangThaiHoatDong_User }}',
+                                        '{{ $gv->PhuTrachMon_User ?? '' }}',
+                                        '{{ $gv->PhuTrachKhoi_User ?? '' }}'
+                                    )">Sửa</button>
 
-                                <form method="POST"
-                                      action="{{ route('admin.giao-vien.destroy', $gv->ID_User) }}"
-                                      style="display:inline"
-                                      onsubmit="return confirm('Xóa giáo viên {{ addslashes($gv->HoVaTen_User) }}?\nGiáo viên đang phụ trách lớp học sẽ không thể xóa.')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn-danger">Xóa</button>
-                                </form>
+                                    <form method="POST"
+                                          action="{{ route('admin.giao-vien.destroy', $gv->ID_User) }}"
+                                          style="display:inline"
+                                          onsubmit="return confirm('Xóa giáo viên {{ addslashes($gv->HoVaTen_User) }}?\nGiáo viên đang phụ trách lớp học sẽ không thể xóa.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-danger">Xóa</button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                         @empty
@@ -195,7 +214,8 @@
 </div>
 
 <script>
-    window.PAGE_ROLE   = 'admin';
+    window.PAGE_USER_NAME = "{{ session('auth.name') }}";
+      window.PAGE_ROLE   = 'admin';
     window.PAGE_ACTIVE = 'quanly-giaovien';
 
     const storeUrl   = "{{ route('admin.giao-vien.store') }}";

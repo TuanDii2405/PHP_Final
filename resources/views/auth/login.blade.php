@@ -206,10 +206,10 @@
             <form method="post" action="{{ route('login') }}">
                 @csrf
                 <div class="form-group">
-                    <label for="username">Tên đăng nhập</label>
+                    <label for="username">Email</label>
                     <div class="field-wrap">
-                        <i class="bi bi-person"></i>
-                        <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Nhập tên đăng nhập..." required />
+                        <i class="bi bi-envelope"></i>
+                        <input type="email" id="username" name="username" value="{{ old('username') }}" placeholder="Nhập địa chỉ email..." required />
                     </div>
                 </div>
                 <div class="form-group">

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -56,7 +56,8 @@
         </div>
     </main>
 </div>
-<script>window.PAGE_ROLE = 'hocsinh'; window.PAGE_ACTIVE = 'hs-lichsu-lamdai';</script>
+<script>window.PAGE_USER_NAME = "{{ session('auth.name') }}";
+      window.PAGE_ROLE = 'hocsinh'; window.PAGE_ACTIVE = 'hs-lichsu-lamdai';</script>
 <script src="{{ asset('assets/js/layout.js') }}"></script>
 </body>
 </html>

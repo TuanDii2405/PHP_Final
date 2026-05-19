@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -203,7 +203,8 @@
 
 {{-- Dữ liệu thành viên nhúng sẵn để không cần AJAX --}}
 <script>
-    window.PAGE_ROLE   = 'admin';
+    window.PAGE_USER_NAME = "{{ session('auth.name') }}";
+      window.PAGE_ROLE   = 'admin';
     window.PAGE_ACTIVE = 'quanly-lophoc';
 
     // Dữ liệu thành viên từng lớp (nhúng từ server)

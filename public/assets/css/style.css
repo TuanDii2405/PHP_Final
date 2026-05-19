@@ -335,6 +335,23 @@ a.nav-btn {
   transform: translateY(-1px);
 }
 
+.btn-approve {
+  display: inline-block;
+  padding: 5px 14px;
+  background: var(--white);
+  color: #256029;
+  border: 1.5px solid #256029;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-approve:hover {
+  background: #256029;
+  color: var(--white);
+}
+
 .btn-danger {
   display: inline-block;
   padding: 5px 14px;
@@ -834,6 +851,7 @@ a.nav-btn {
 .badge-active   { background: #e6f4ea; color: #256029; }
 .badge-inactive { background: #f3f7fb; color: var(--text-soft); }
 .badge-locked   { background: var(--jasper-100); color: var(--jasper-dark); }
+.badge-pending  { background: #fff8e1; color: #b45309; }
 
 /* ================================================================
    THÔNG BÁO

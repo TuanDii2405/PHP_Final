@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -152,7 +152,8 @@
 </div>
 
 <script>
-    window.PAGE_ROLE   = 'admin';
+    window.PAGE_USER_NAME = "{{ session('auth.name') }}";
+      window.PAGE_ROLE   = 'admin';
     window.PAGE_ACTIVE = 'quanly-dethi';
 
     const storeUrl   = "{{ route('admin.de-thi.store') }}";

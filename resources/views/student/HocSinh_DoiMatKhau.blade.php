@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giáo viên – Đổi mật khẩu</title>
+    <title>Học sinh – Đổi mật khẩu</title>
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 </head>
 <body>
@@ -11,7 +11,7 @@
 <div class="layout">
     <div id="app-sidebar"></div>
     <main class="main-content">
-        <div class="role-title-box"><h2>VAI TRÒ GIÁO VIÊN</h2></div>
+        <div class="role-title-box"><h2>VAI TRÒ HỌC SINH</h2></div>
         <div class="content-box">
             <div class="section-title blue">Đổi mật khẩu</div>
 
@@ -24,7 +24,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('teacher.doi-mat-khau.update') }}" style="max-width:440px">
+            <form method="POST" action="{{ route('student.doi-mat-khau.update') }}" style="max-width:440px">
                 @csrf
                 <div class="form-group-inline">
                     <label>Mật khẩu hiện tại</label>
@@ -48,8 +48,8 @@
 </div>
 <script>
     window.PAGE_USER_NAME = "{{ session('auth.name') }}";
-      window.PAGE_ROLE   = 'giaovien';
-    window.PAGE_ACTIVE = 'gv-doimatkhau';
+    window.PAGE_ROLE   = 'hocsinh';
+    window.PAGE_ACTIVE = 'hs-doimatkhau';
 </script>
 <script src="{{ asset('assets/js/layout.js') }}"></script>
 </body>

@@ -44,7 +44,7 @@
     "gv-thongtin": "bi-person-badge",
     "gv-doimatkhau": "bi-key",
 
-    "hs-thongtin": "bi-person-badge",
+    "hs-thongtin":    "bi-person-badge",
     "hs-ds-kythi": "bi-calendar3",
     "hs-ds-lophoc": "bi-people",
     "hs-lichsu-lamdai": "bi-clock-history",
@@ -275,7 +275,7 @@
 
     var html =
       '<aside class="sidebar">' +
-      '<p class="greeting">Chào, Võ Tấn Duy</p>' +
+      '<p class="greeting">Chào, ' + (window.PAGE_USER_NAME || 'Bạn') + '</p>' +
       '<p class="nav-title">Thanh điều hướng chức năng</p>';
 
     if (role === "hocsinh") {
@@ -292,8 +292,17 @@
           "</a>";
       });
     } else {
-      /* Accordion – group có sub-items */
+      /* Accordion – item có href thì render link trực tiếp, có items thì accordion */
       menu.forEach(function (group) {
+        if (group.href) {
+          /* Link trực tiếp (không accordion) */
+          var active = group.id === activeItem ? " active" : "";
+          html +=
+            '<a class="nav-btn' + active + '" href="' + group.href + '">' +
+            decorateMenuLabel(group.id, group.label) +
+            "</a>";
+          return;
+        }
         var groupOpen = group.items.some(function (it) {
           return it.id === activeItem;
         });
@@ -476,6 +485,20 @@
       window.initLayout(window.PAGE_ROLE, window.PAGE_ACTIVE || "");
     }
     applySemanticIcons();
+
+    /* Nhấn vào role-title-box → về trang chủ */
+    var roleBox = document.querySelector('.role-title-box');
+    if (roleBox && window.PAGE_ROLE) {
+      var homeMap = { admin: '/admin', giaovien: '/giao-vien', hocsinh: '/hoc-sinh' };
+      var homeUrl = homeMap[window.PAGE_ROLE];
+      if (homeUrl) {
+        roleBox.style.cursor = 'pointer';
+        roleBox.title = 'Về trang chủ';
+        roleBox.addEventListener('click', function () {
+          window.location.href = homeUrl;
+        });
+      }
+    }
 
     var impName = getImpersonatingName();
     if (impName && window.PAGE_ROLE && window.PAGE_ROLE !== 'admin') {

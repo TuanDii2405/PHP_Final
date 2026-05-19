@@ -695,6 +695,19 @@ class TeacherController extends Controller
             'SoDienThoai_User'       => 'nullable|string|max:20',
             'NgayThangNamSinh_User'  => 'nullable|date',
         ]);
+
+        if (!empty($data['EmailCaNhan_User'])) {
+            $exists = DB::selectOne(
+                'SELECT ID_User FROM `User` WHERE LOWER(EmailCaNhan_User) = ? AND ID_User != ? LIMIT 1',
+                [strtolower($data['EmailCaNhan_User']), $teacherId]
+            );
+            if ($exists) {
+                return redirect()->route('teacher.thong-tin')
+                    ->withErrors(['EmailCaNhan_User' => 'Email này đã được sử dụng bởi tài khoản khác.'])
+                    ->withInput();
+            }
+        }
+
         DB::table('User')->where('ID_User', $teacherId)->update($data);
         return redirect()->route('teacher.thong-tin')->with('success', 'Cập nhật thông tin thành công!');
     }

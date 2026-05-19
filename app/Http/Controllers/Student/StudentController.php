@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -69,20 +70,40 @@ class StudentController extends Controller
              ORDER BY l.ID_LopHoc",
             [$studentId]
         );
-        return view('student.HocSinh_DanhSachLopHoc', compact('lopHocs'));
+
+        // Lịch học (buổi điểm danh) của từng lớp, nhóm theo ID_LopHoc
+        $lichHocRaw = DB::select(
+            "SELECT dd.ID_LopHoc, dd.NgayHoc_DiemDanh,
+                    dd.ThoiGianBatDau_DiemDanh, dd.ThoiGianKetThuc_DiemDanh,
+                    dd.TrangThaiBuoiHoc_DiemDanh
+             FROM Diem_danh dd
+             JOIN Lop_hoc_ThanhVien lv ON dd.ID_LopHoc = lv.ID_LopHoc
+             WHERE lv.ID_Student = ?
+             ORDER BY dd.NgayHoc_DiemDanh ASC, dd.ThoiGianBatDau_DiemDanh ASC",
+            [$studentId]
+        );
+
+        $lichHoc = [];
+        foreach ($lichHocRaw as $row) {
+            $lichHoc[$row->ID_LopHoc][] = $row;
+        }
+
+        return view('student.HocSinh_DanhSachLopHoc', compact('lopHocs', 'lichHoc'));
     }
 
     public function kyThi(Request $request): View
     {
         $studentId = $request->session()->get('auth.id');
         $kyThis = DB::select(
-            "SELECT DISTINCT kt.*, m.Ten_MonHoc
+            "SELECT DISTINCT kt.*, m.Ten_MonHoc,
+                    IF(ds.ID_DiemSo IS NOT NULL, 1, 0) as da_nop
              FROM Ky_thi kt
              JOIN Mon_Hoc m ON kt.ID_MonHoc = m.ID_MonHoc
              JOIN Lop_hoc_ThanhVien lv ON kt.ID_LopHoc = lv.ID_LopHoc
+             LEFT JOIN Diem_so ds ON ds.ID_MaKyThi = kt.ID_KyThi AND ds.ID_User = ?
              WHERE lv.ID_Student = ?
              ORDER BY kt.ThoiGianBatDau_KyThi",
-            [$studentId]
+            [$studentId, $studentId]
         );
         return view('student.HocSinh_DanhSachKyThi', compact('kyThis'));
     }
@@ -141,6 +162,102 @@ class StudentController extends Controller
 
     public function xepHang(): View
     {
-        return view('student.HocSinh_XepHang');
+        $studentId = session('auth.id');
+
+        $lopHocs = DB::select(
+            "SELECT l.ID_LopHoc, l.TenLopHoc, m.Ten_MonHoc, k.Ten_KhoiLop
+             FROM Lop_hoc_ThanhVien lv
+             JOIN Lop_hoc l  ON lv.ID_LopHoc  = l.ID_LopHoc
+             JOIN Mon_Hoc m  ON l.ID_MonHoc   = m.ID_MonHoc
+             JOIN Khoi_lop k ON l.ID_KhoiLop  = k.ID_KhoiLop
+             WHERE lv.ID_Student = ?
+             ORDER BY l.ID_LopHoc",
+            [$studentId]
+        );
+
+        $rankings = [];
+        foreach ($lopHocs as $lop) {
+            $rows = DB::select(
+                "SELECT u.ID_User, u.HoVaTen_User,
+                        COALESCE(AVG(ds.TongDiem_DiemSo), 0) as diem_tb,
+                        COUNT(DISTINCT ds.ID_DiemSo) as so_bai
+                 FROM Lop_hoc_ThanhVien lv2
+                 JOIN `User` u ON lv2.ID_Student = u.ID_User
+                 LEFT JOIN Ky_thi kt ON kt.ID_LopHoc = lv2.ID_LopHoc
+                 LEFT JOIN Diem_so ds ON ds.ID_MaKyThi = kt.ID_KyThi
+                                    AND ds.ID_User = lv2.ID_Student
+                 WHERE lv2.ID_LopHoc = ?
+                 GROUP BY u.ID_User, u.HoVaTen_User
+                 ORDER BY diem_tb DESC",
+                [$lop->ID_LopHoc]
+            );
+
+            $rankings[] = [
+                'lop'  => $lop,
+                'bang' => $rows,
+            ];
+        }
+
+        return view('student.HocSinh_XepHang', compact('rankings', 'studentId'));
+    }
+
+    public function thongTinUpdate(Request $request): RedirectResponse
+    {
+        $studentId = session('auth.id');
+        $data = $request->validate([
+            'HoVaTen_User'          => 'required|string|max:150',
+            'EmailCaNhan_User'      => 'nullable|email|max:150',
+            'SoDienThoai_User'      => 'nullable|string|max:20',
+            'NgayThangNamSinh_User' => 'nullable|date',
+        ]);
+
+        if (!empty($data['EmailCaNhan_User'])) {
+            $exists = DB::selectOne(
+                'SELECT ID_User FROM `User` WHERE LOWER(EmailCaNhan_User) = ? AND ID_User != ? LIMIT 1',
+                [strtolower($data['EmailCaNhan_User']), $studentId]
+            );
+            if ($exists) {
+                return redirect()->route('student.thong-tin')
+                    ->withErrors(['EmailCaNhan_User' => 'Email này đã được sử dụng bởi tài khoản khác.'])
+                    ->withInput();
+            }
+        }
+
+        DB::table('User')->where('ID_User', $studentId)->update($data);
+        return redirect()->route('student.thong-tin')->with('success', 'Cập nhật thông tin thành công!');
+    }
+
+    public function doiMatKhauUpdate(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'mat_khau_cu'  => 'required|string',
+            'mat_khau_moi' => 'required|string|min:6',
+            'xac_nhan'     => 'required|string|same:mat_khau_moi',
+        ]);
+
+        $studentId = session('auth.id');
+        $user = DB::table('User')->where('ID_User', $studentId)->first();
+
+        $matKhauCu  = $request->input('mat_khau_cu');
+        $matKhauMoi = $request->input('mat_khau_moi');
+
+        $stored  = (string) ($user->Pass_User ?? '');
+        $isValid = password_get_info($stored)['algo'] !== null
+            ? password_verify($matKhauCu, $stored)
+            : hash_equals($stored, md5($matKhauCu));
+
+        if (!$isValid) {
+            return back()->withErrors(['mat_khau_cu' => 'Mật khẩu hiện tại không đúng.'])->withInput();
+        }
+
+        if ($matKhauCu === $matKhauMoi) {
+            return back()->withErrors(['mat_khau_moi' => 'Mật khẩu mới không được trùng mật khẩu cũ.'])->withInput();
+        }
+
+        DB::table('User')
+            ->where('ID_User', $studentId)
+            ->update(['Pass_User' => md5($matKhauMoi)]);
+
+        return redirect()->route('student.thong-tin')->with('success', 'Đổi mật khẩu thành công!');
     }
 }

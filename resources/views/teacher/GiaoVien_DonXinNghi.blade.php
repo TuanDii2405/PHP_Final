@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -94,7 +94,8 @@
     </main>
 </div>
 <script>
-    window.PAGE_ROLE   = 'giaovien';
+    window.PAGE_USER_NAME = "{{ session('auth.name') }}";
+      window.PAGE_ROLE   = 'giaovien';
     window.PAGE_ACTIVE = 'don-xin-nghi';
 
     function filterTable() {

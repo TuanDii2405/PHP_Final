@@ -105,7 +105,7 @@ class AdminController extends Controller
             'EmailCaNhan_User'       => 'nullable|email|max:150|unique:User,EmailCaNhan_User',
             'SoDienThoai_User'       => 'nullable|string|max:20',
             'NgayThangNamSinh_User'  => 'nullable|date',
-            'TrangThaiHoatDong_User' => 'required|in:active,inactive,locked',
+            'TrangThaiHoatDong_User' => 'required|in:active,inactive,locked,pending',
             'PhuTrachMon_User'       => 'nullable|integer|exists:Mon_Hoc,ID_MonHoc',
             'PhuTrachKhoi_User'      => 'nullable|integer|exists:Khoi_lop,ID_KhoiLop',
             'mat_khau'               => 'required|string|min:6',
@@ -134,7 +134,7 @@ class AdminController extends Controller
             'EmailCaNhan_User'       => "nullable|email|max:150|unique:User,EmailCaNhan_User,{$id},ID_User",
             'SoDienThoai_User'       => 'nullable|string|max:20',
             'NgayThangNamSinh_User'  => 'nullable|date',
-            'TrangThaiHoatDong_User' => 'required|in:active,inactive,locked',
+            'TrangThaiHoatDong_User' => 'required|in:active,inactive,locked,pending',
             'PhuTrachMon_User'       => 'nullable|integer|exists:Mon_Hoc,ID_MonHoc',
             'PhuTrachKhoi_User'      => 'nullable|integer|exists:Khoi_lop,ID_KhoiLop',
             'mat_khau'               => 'nullable|string|min:6',
@@ -160,6 +160,28 @@ class AdminController extends Controller
             ->update($update);
 
         return redirect()->route('admin.giao-vien')->with('success', 'Cập nhật giáo viên thành công!');
+    }
+
+    public function giaoVienDuyet(int $id): RedirectResponse
+    {
+        DB::table('User')
+            ->where('ID_User', $id)
+            ->where('PhanQuyen_User', 'teacher')
+            ->where('TrangThaiHoatDong_User', 'pending')
+            ->update(['TrangThaiHoatDong_User' => 'active']);
+
+        return redirect()->route('admin.giao-vien')->with('success', 'Đã duyệt tài khoản giáo viên!');
+    }
+
+    public function giaoVienTuChoi(int $id): RedirectResponse
+    {
+        DB::table('User')
+            ->where('ID_User', $id)
+            ->where('PhanQuyen_User', 'teacher')
+            ->where('TrangThaiHoatDong_User', 'pending')
+            ->delete();
+
+        return redirect()->route('admin.giao-vien')->with('success', 'Đã từ chối và xóa tài khoản!');
     }
 
     public function giaoVienDestroy(int $id): RedirectResponse
@@ -964,7 +986,7 @@ class AdminController extends Controller
             'EmailCaNhan_User'       => 'nullable|email|max:150|unique:User,EmailCaNhan_User',
             'SoDienThoai_User'       => 'nullable|string|max:20',
             'NgayThangNamSinh_User'  => 'nullable|date',
-            'TrangThaiHoatDong_User' => 'required|in:active,inactive,locked',
+            'TrangThaiHoatDong_User' => 'required|in:active,inactive,locked,pending',
             'mat_khau'               => 'required|string|min:6',
         ]);
 
@@ -989,7 +1011,7 @@ class AdminController extends Controller
             'EmailCaNhan_User'       => "nullable|email|max:150|unique:User,EmailCaNhan_User,{$id},ID_User",
             'SoDienThoai_User'       => 'nullable|string|max:20',
             'NgayThangNamSinh_User'  => 'nullable|date',
-            'TrangThaiHoatDong_User' => 'required|in:active,inactive,locked',
+            'TrangThaiHoatDong_User' => 'required|in:active,inactive,locked,pending',
             'mat_khau'               => 'nullable|string|min:6',
         ]);
 
@@ -1011,6 +1033,28 @@ class AdminController extends Controller
             ->update($update);
 
         return redirect()->route('admin.hoc-sinh')->with('success', 'Cập nhật học sinh thành công!');
+    }
+
+    public function hocSinhDuyet(int $id): RedirectResponse
+    {
+        DB::table('User')
+            ->where('ID_User', $id)
+            ->where('PhanQuyen_User', 'student')
+            ->where('TrangThaiHoatDong_User', 'pending')
+            ->update(['TrangThaiHoatDong_User' => 'active']);
+
+        return redirect()->route('admin.hoc-sinh')->with('success', 'Đã duyệt tài khoản học sinh!');
+    }
+
+    public function hocSinhTuChoi(int $id): RedirectResponse
+    {
+        DB::table('User')
+            ->where('ID_User', $id)
+            ->where('PhanQuyen_User', 'student')
+            ->where('TrangThaiHoatDong_User', 'pending')
+            ->delete();
+
+        return redirect()->route('admin.hoc-sinh')->with('success', 'Đã từ chối và xóa tài khoản!');
     }
 
     public function hocSinhDestroy(int $id): RedirectResponse

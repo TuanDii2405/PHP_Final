@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
@@ -184,6 +184,7 @@
     </div>
 
     <script>
+      window.PAGE_USER_NAME = "{{ session('auth.name') }}";
       window.PAGE_ROLE   = 'admin';
       window.PAGE_ACTIVE = '';
 

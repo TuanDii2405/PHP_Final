@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -34,7 +34,18 @@
                             <td>{{ $dd->ten_giao_vien }}</td>
                             <td>{{ $dd->Ten_MonHoc }}</td>
                             <td>{{ \Carbon\Carbon::parse($dd->NgayHoc_DiemDanh)->format('d/m/Y') }}</td>
-                            <td>{{ $dd->TrangThaiBuoiHoc_DiemDanh }}</td>
+                            <td>
+                                @php
+                                    $trangThai = match($dd->TrangThaiBuoiHoc_DiemDanh) {
+                                        'scheduled'   => 'Đã lên lịch',
+                                        'in_progress' => 'Đang diễn ra',
+                                        'completed'   => 'Đã hoàn thành',
+                                        'cancelled'   => 'Đã hủy',
+                                        default       => $dd->TrangThaiBuoiHoc_DiemDanh,
+                                    };
+                                @endphp
+                                {{ $trangThai }}
+                            </td>
                         </tr>
                         @empty
                         <tr><td colspan="6" class="empty-notice">Chưa có dữ liệu điểm danh</td></tr>
@@ -45,7 +56,8 @@
         </div>
     </main>
 </div>
-<script>window.PAGE_ROLE = 'hocsinh'; window.PAGE_ACTIVE = 'hs-diemdanh';</script>
+<script>window.PAGE_USER_NAME = "{{ session('auth.name') }}";
+      window.PAGE_ROLE = 'hocsinh'; window.PAGE_ACTIVE = 'hs-diemdanh';</script>
 <script src="{{ asset('assets/js/layout.js') }}"></script>
 </body>
 </html>

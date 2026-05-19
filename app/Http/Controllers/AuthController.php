@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -57,10 +58,10 @@ class AuthController extends Controller
                 $user = DB::selectOne(
                     'SELECT ID_User, Pass_User, PhanQuyen_User, HoVaTen_User, TrangThaiHoatDong_User
                      FROM `User`
-                     WHERE LOWER(EmailCaNhan_User) = ? OR SoDienThoai_User = ?
+                     WHERE LOWER(EmailCaNhan_User) = ?
                      ORDER BY ID_User ASC
                      LIMIT 1',
-                    [$loginInput, $loginInput]
+                    [$loginInput]
                 );
             }
         } catch (\Throwable) {
@@ -69,6 +70,10 @@ class AuthController extends Controller
 
         if (!$user) {
             return redirect()->route('login')->withInput(['username' => $loginInput])->with('error', 'Sai tài khoản hoặc mật khẩu.');
+        }
+
+        if (($user->TrangThaiHoatDong_User ?? '') === 'pending') {
+            return redirect()->route('login')->withInput(['username' => $loginInput])->with('error', 'Tài khoản đang chờ admin duyệt. Vui lòng thử lại sau.');
         }
 
         if (($user->TrangThaiHoatDong_User ?? '') !== 'active') {
@@ -162,13 +167,13 @@ class AuthController extends Controller
             DB::insert(
                 'INSERT INTO `User` (Pass_User, PhanQuyen_User, HoVaTen_User, NgayThangNamSinh_User, EmailCaNhan_User, TrangThaiHoatDong_User)
                  VALUES (?, ?, ?, ?, ?, ?)',
-                [password_hash($password, PASSWORD_BCRYPT), $roleMap[$role], $fullname, $dob, $email, 'active']
+                [password_hash($password, PASSWORD_BCRYPT), $roleMap[$role], $fullname, $dob, $email, 'pending']
             );
         } catch (\Throwable) {
             return $back('Hệ thống tạm thời gián đoạn kết nối CSDL.');
         }
 
-        return redirect()->route('login')->with('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
+        return redirect()->route('login')->with('success', 'Đăng ký thành công! Tài khoản đang chờ admin duyệt.');
     }
 
     public function showDoiMatKhau(Request $request): View|RedirectResponse
@@ -177,16 +182,25 @@ class AuthController extends Controller
             return $this->redirectHome($request);
         }
 
-        // Cho phép huỷ về bước 1
         if ($request->has('cancel')) {
-            $request->session()->forget(['qmk_user_id', 'qmk_user_name']);
+            $request->session()->forget(['qmk_user_id', 'qmk_user_name', 'qmk_email_masked', 'qmk_otp', 'qmk_otp_expiry']);
             return redirect()->route('doi-mat-khau');
         }
 
-        if ($request->session()->has('qmk_user_id')) {
+        // Step 3: OTP verified — show new password form
+        if ($request->session()->has('qmk_user_id') && !$request->session()->has('qmk_otp')) {
             return view('auth.doimatkhau', [
-                'step'          => 2,
+                'step'          => 3,
                 'qmk_user_name' => $request->session()->get('qmk_user_name', ''),
+            ]);
+        }
+
+        // Step 2: OTP sent — show OTP input form
+        if ($request->session()->has('qmk_otp')) {
+            return view('auth.doimatkhau', [
+                'step'             => 2,
+                'qmk_user_name'    => $request->session()->get('qmk_user_name', ''),
+                'qmk_email_masked' => $request->session()->get('qmk_email_masked', ''),
             ]);
         }
 
@@ -199,24 +213,29 @@ class AuthController extends Controller
             return $this->redirectHome($request);
         }
 
-        $step = $request->input('step', '1');
+        $step = (string) $request->input('step', '1');
 
-        // ── Bước 1: xác minh email / SĐT ─────────────────────
+        // ── Bước 1: gửi OTP ──────────────────────────────────
         if ($step === '1') {
-            $loginInput = strtolower(trim((string) $request->input('username', '')));
+            $email = strtolower(trim((string) $request->input('username', '')));
 
-            if (!$loginInput) {
+            if (!$email) {
                 return redirect()->route('doi-mat-khau')
-                    ->with('error', 'Vui lòng nhập email hoặc số điện thoại.');
+                    ->with('error', 'Vui lòng nhập địa chỉ email.');
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return redirect()->route('doi-mat-khau')
+                    ->withInput()->with('error', 'Địa chỉ email không hợp lệ.');
             }
 
             try {
                 $user = DB::selectOne(
-                    'SELECT ID_User, HoVaTen_User, TrangThaiHoatDong_User
+                    'SELECT ID_User, HoVaTen_User, EmailCaNhan_User, TrangThaiHoatDong_User
                      FROM `User`
-                     WHERE LOWER(EmailCaNhan_User) = ? OR SoDienThoai_User = ?
+                     WHERE LOWER(EmailCaNhan_User) = ?
                      ORDER BY ID_User ASC LIMIT 1',
-                    [$loginInput, $loginInput]
+                    [$email]
                 );
             } catch (\Throwable) {
                 return redirect()->route('doi-mat-khau')
@@ -225,24 +244,72 @@ class AuthController extends Controller
 
             if (!$user) {
                 return redirect()->route('doi-mat-khau')
-                    ->withInput()
-                    ->with('error', 'Không tìm thấy tài khoản với thông tin đã nhập.');
+                    ->withInput()->with('error', 'Không tìm thấy tài khoản với email đã nhập.');
             }
 
             if (($user->TrangThaiHoatDong_User ?? '') !== 'active') {
                 return redirect()->route('doi-mat-khau')
-                    ->withInput()
-                    ->with('error', 'Tài khoản hiện không hoạt động, vui lòng liên hệ quản trị viên.');
+                    ->withInput()->with('error', 'Tài khoản hiện không hoạt động, vui lòng liên hệ quản trị viên.');
             }
 
-            $request->session()->put('qmk_user_id',   $user->ID_User);
-            $request->session()->put('qmk_user_name', $user->HoVaTen_User);
+            return $this->sendOtp($request, $user);
+        }
 
+        // ── Gửi lại OTP ───────────────────────────────────────
+        if ($step === 'resend') {
+            if (!$request->session()->has('qmk_user_id')) {
+                return redirect()->route('doi-mat-khau')
+                    ->with('error', 'Phiên làm việc hết hạn, vui lòng thử lại từ đầu.');
+            }
+
+            $userId = (int) $request->session()->get('qmk_user_id');
+
+            try {
+                $user = DB::selectOne(
+                    'SELECT ID_User, HoVaTen_User, EmailCaNhan_User FROM `User` WHERE ID_User = ? LIMIT 1',
+                    [$userId]
+                );
+            } catch (\Throwable) {
+                return redirect()->route('doi-mat-khau')
+                    ->with('error', 'Hệ thống tạm thời gián đoạn kết nối CSDL.');
+            }
+
+            if (!$user) {
+                return redirect()->route('doi-mat-khau')
+                    ->with('error', 'Không tìm thấy tài khoản.');
+            }
+
+            return $this->sendOtp($request, $user, success: true);
+        }
+
+        // ── Bước 2: xác minh OTP ─────────────────────────────
+        if ($step === '2') {
+            if (!$request->session()->has('qmk_otp')) {
+                return redirect()->route('doi-mat-khau')
+                    ->with('error', 'Phiên làm việc hết hạn, vui lòng thử lại từ đầu.');
+            }
+
+            $otp       = (string) $request->input('otp', '');
+            $storedOtp = (string) $request->session()->get('qmk_otp');
+            $expiry    = (string) $request->session()->get('qmk_otp_expiry', '');
+
+            if ($expiry && now()->gt($expiry)) {
+                $request->session()->forget(['qmk_otp', 'qmk_otp_expiry']);
+                return redirect()->route('doi-mat-khau')
+                    ->with('error', 'Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại mã.');
+            }
+
+            if (!hash_equals($storedOtp, $otp)) {
+                return redirect()->route('doi-mat-khau')
+                    ->with('error', 'Mã OTP không chính xác. Vui lòng kiểm tra lại.');
+            }
+
+            $request->session()->forget(['qmk_otp', 'qmk_otp_expiry']);
             return redirect()->route('doi-mat-khau');
         }
 
-        // ── Bước 2: đặt mật khẩu mới ─────────────────────────
-        if (!$request->session()->has('qmk_user_id')) {
+        // ── Bước 3: đặt mật khẩu mới ─────────────────────────
+        if (!$request->session()->has('qmk_user_id') || $request->session()->has('qmk_otp')) {
             return redirect()->route('doi-mat-khau')
                 ->with('error', 'Phiên làm việc hết hạn, vui lòng thử lại.');
         }
@@ -269,16 +336,60 @@ class AuthController extends Controller
         try {
             DB::update(
                 'UPDATE `User` SET Pass_User = ? WHERE ID_User = ?',
-                [md5($newPass), $userId]
+                [password_hash($newPass, PASSWORD_BCRYPT), $userId]
             );
         } catch (\Throwable) {
             return redirect()->route('doi-mat-khau')
                 ->with('error', 'Không thể cập nhật mật khẩu. Vui lòng thử lại.');
         }
 
-        $request->session()->forget(['qmk_user_id', 'qmk_user_name']);
+        $request->session()->forget(['qmk_user_id', 'qmk_user_name', 'qmk_email_masked', 'qmk_otp', 'qmk_otp_expiry']);
 
         return redirect()->route('login')
             ->with('success', 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập.');
+    }
+
+    private function sendOtp(Request $request, object $user, bool $success = false): RedirectResponse
+    {
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        try {
+            Mail::raw(
+                "Xin chào {$user->HoVaTen_User},\n\nMã OTP khôi phục mật khẩu của bạn là:\n\n    {$otp}\n\nMã có hiệu lực trong 5 phút. Không chia sẻ mã này với bất kỳ ai.\n\n– Hệ thống Quản lý Trường học",
+                function ($m) use ($user) {
+                    $m->to((string) $user->EmailCaNhan_User)
+                      ->subject('Mã OTP khôi phục mật khẩu – Hệ thống Quản lý Trường học');
+                }
+            );
+        } catch (\Throwable) {
+            return redirect()->route('doi-mat-khau')
+                ->with('error', 'Không thể gửi email. Vui lòng thử lại sau.');
+        }
+
+        $email = strtolower((string) $user->EmailCaNhan_User);
+        $request->session()->put('qmk_user_id',     (int)    $user->ID_User);
+        $request->session()->put('qmk_user_name',   (string) $user->HoVaTen_User);
+        $request->session()->put('qmk_email_masked', $this->maskEmail($email));
+        $request->session()->put('qmk_otp',          $otp);
+        $request->session()->put('qmk_otp_expiry',   now()->addMinutes(5)->toIso8601String());
+
+        $msg = $success
+            ? 'Đã gửi lại mã OTP mới. Vui lòng kiểm tra hộp thư của bạn.'
+            : null;
+
+        return $msg
+            ? redirect()->route('doi-mat-khau')->with('success', $msg)
+            : redirect()->route('doi-mat-khau');
+    }
+
+    private function maskEmail(string $email): string
+    {
+        $parts  = explode('@', $email, 2);
+        $local  = $parts[0];
+        $domain = $parts[1] ?? '';
+        $len    = mb_strlen($local);
+        $show   = min(2, $len);
+        $masked = mb_substr($local, 0, $show) . str_repeat('*', max(0, $len - $show));
+        return $masked . '@' . $domain;
     }
 }

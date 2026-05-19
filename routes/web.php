@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Student\StudentController;
+use App\Http\Controllers\Student\StudentExamController;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect
@@ -24,14 +25,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin'])
     Route::post('/thong-bao',         [AdminController::class, 'thongBaoStore'])->name('thong-bao.store');
     Route::put('/thong-bao/{id}',     [AdminController::class, 'thongBaoUpdate'])->name('thong-bao.update');
     Route::delete('/thong-bao/{id}',  [AdminController::class, 'thongBaoDestroy'])->name('thong-bao.destroy');
-    Route::get('/hoc-sinh',          [AdminController::class, 'hocSinh'])->name('hoc-sinh');
-    Route::post('/hoc-sinh',         [AdminController::class, 'hocSinhStore'])->name('hoc-sinh.store');
-    Route::put('/hoc-sinh/{id}',     [AdminController::class, 'hocSinhUpdate'])->name('hoc-sinh.update');
-    Route::delete('/hoc-sinh/{id}',  [AdminController::class, 'hocSinhDestroy'])->name('hoc-sinh.destroy');
-    Route::get('/giao-vien',         [AdminController::class, 'giaoVien'])->name('giao-vien');
-    Route::post('/giao-vien',        [AdminController::class, 'giaoVienStore'])->name('giao-vien.store');
-    Route::put('/giao-vien/{id}',    [AdminController::class, 'giaoVienUpdate'])->name('giao-vien.update');
-    Route::delete('/giao-vien/{id}', [AdminController::class, 'giaoVienDestroy'])->name('giao-vien.destroy');
+    Route::get('/hoc-sinh',                    [AdminController::class, 'hocSinh'])->name('hoc-sinh');
+    Route::post('/hoc-sinh',                   [AdminController::class, 'hocSinhStore'])->name('hoc-sinh.store');
+    Route::put('/hoc-sinh/{id}',               [AdminController::class, 'hocSinhUpdate'])->name('hoc-sinh.update');
+    Route::delete('/hoc-sinh/{id}',            [AdminController::class, 'hocSinhDestroy'])->name('hoc-sinh.destroy');
+    Route::post('/hoc-sinh/{id}/duyet',        [AdminController::class, 'hocSinhDuyet'])->name('hoc-sinh.duyet');
+    Route::delete('/hoc-sinh/{id}/tu-choi',    [AdminController::class, 'hocSinhTuChoi'])->name('hoc-sinh.tu-choi');
+    Route::get('/giao-vien',                   [AdminController::class, 'giaoVien'])->name('giao-vien');
+    Route::post('/giao-vien',                  [AdminController::class, 'giaoVienStore'])->name('giao-vien.store');
+    Route::put('/giao-vien/{id}',              [AdminController::class, 'giaoVienUpdate'])->name('giao-vien.update');
+    Route::delete('/giao-vien/{id}',           [AdminController::class, 'giaoVienDestroy'])->name('giao-vien.destroy');
+    Route::post('/giao-vien/{id}/duyet',       [AdminController::class, 'giaoVienDuyet'])->name('giao-vien.duyet');
+    Route::delete('/giao-vien/{id}/tu-choi',   [AdminController::class, 'giaoVienTuChoi'])->name('giao-vien.tu-choi');
     Route::get('/khoi-lop',          [AdminController::class, 'khoiLop'])->name('khoi-lop');
     Route::post('/khoi-lop',         [AdminController::class, 'khoiLopStore'])->name('khoi-lop.store');
     Route::put('/khoi-lop/{id}',     [AdminController::class, 'khoiLopUpdate'])->name('khoi-lop.update');
@@ -135,5 +140,10 @@ Route::prefix('hoc-sinh')->name('student.')->middleware(['auth.check', 'role:stu
     Route::get('/lich-su-bai', [StudentController::class, 'lichSuLamBai'])->name('lich-su-bai');
     Route::get('/diem-danh',   [StudentController::class, 'diemDanh'])->name('diem-danh');
     Route::get('/thong-tin',   [StudentController::class, 'thongTin'])->name('thong-tin');
+    Route::put('/thong-tin',   [StudentController::class, 'thongTinUpdate'])->name('thong-tin.update');
+    Route::post('/doi-mat-khau', [StudentController::class, 'doiMatKhauUpdate'])->name('doi-mat-khau.update');
     Route::get('/xep-hang',    [StudentController::class, 'xepHang'])->name('xep-hang');
+
+    Route::get('/tham-gia-thi',  [StudentExamController::class, 'loadExam'])->name('tham-gia-thi');
+    Route::post('/tham-gia-thi', [StudentExamController::class, 'submitExam'])->name('nop-bai-thi');
 });

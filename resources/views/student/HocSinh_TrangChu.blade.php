@@ -1,10 +1,20 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Học sinh – Trang chủ</title>
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" />
+    <style>
+        .thongbao-list   { display:flex;flex-direction:column;gap:10px;margin-top:12px; }
+        .thongbao-item   { border:1px solid var(--cerulean-200);border-radius:10px;padding:12px 16px;background:#fff; }
+        .thongbao-header { display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px; }
+        .thongbao-scope  { font-size:12px;font-weight:700;color:var(--cerulean);display:flex;align-items:center;gap:5px; }
+        .scope-all       { color:var(--jasper); }
+        .thongbao-date   { font-size:11px;color:var(--text-soft);display:flex;align-items:center;gap:4px; }
+        .thongbao-content{ font-size:14px;color:var(--text-main);line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:6px; }
+        .thongbao-footer { font-size:12px;color:var(--text-soft);display:flex;align-items:center;gap:4px; }
+    </style>
   </head>
   <body>
     <div id="app-header"></div>
@@ -55,6 +65,7 @@
       </main>
     </div>
     <script>
+      window.PAGE_USER_NAME = "{{ session('auth.name') }}";
       window.PAGE_ROLE = "hocsinh";
       window.PAGE_ACTIVE = "";
     </script>

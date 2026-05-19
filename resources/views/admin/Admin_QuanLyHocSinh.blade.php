@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -59,6 +59,8 @@
                             <td>
                                 @if ($hs->TrangThaiHoatDong_User === 'active')
                                     <span class="badge badge-active">Hoạt động</span>
+                                @elseif ($hs->TrangThaiHoatDong_User === 'pending')
+                                    <span class="badge badge-pending">Chờ duyệt</span>
                                 @elseif ($hs->TrangThaiHoatDong_User === 'locked')
                                     <span class="badge badge-locked">Bị khóa</span>
                                 @else
@@ -66,31 +68,48 @@
                                 @endif
                             </td>
                             <td style="white-space:nowrap">
-                                <form method="POST"
-                                      action="{{ route('admin.impersonate', $hs->ID_User) }}"
-                                      style="display:inline"
-                                      onsubmit="return confirm('Đăng nhập vào tài khoản của {{ addslashes($hs->HoVaTen_User) }}?')">
-                                    @csrf
-                                    <button type="submit" class="btn-edit">Xem</button>
-                                </form>
+                                @if ($hs->TrangThaiHoatDong_User === 'pending')
+                                    <form method="POST"
+                                          action="{{ route('admin.hoc-sinh.duyet', $hs->ID_User) }}"
+                                          style="display:inline">
+                                        @csrf
+                                        <button type="submit" class="btn-approve">Duyệt</button>
+                                    </form>
+                                    <form method="POST"
+                                          action="{{ route('admin.hoc-sinh.tu-choi', $hs->ID_User) }}"
+                                          style="display:inline"
+                                          onsubmit="return confirm('Từ chối và xóa tài khoản {{ addslashes($hs->HoVaTen_User) }}?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-danger">Từ chối</button>
+                                    </form>
+                                @else
+                                    <form method="POST"
+                                          action="{{ route('admin.impersonate', $hs->ID_User) }}"
+                                          style="display:inline"
+                                          onsubmit="return confirm('Đăng nhập vào tài khoản của {{ addslashes($hs->HoVaTen_User) }}?')">
+                                        @csrf
+                                        <button type="submit" class="btn-edit">Xem</button>
+                                    </form>
 
-                                <button class="btn-edit" onclick="openEdit(
-                                    {{ $hs->ID_User }},
-                                    '{{ addslashes($hs->HoVaTen_User) }}',
-                                    '{{ $hs->EmailCaNhan_User ?? '' }}',
-                                    '{{ $hs->SoDienThoai_User ?? '' }}',
-                                    '{{ $hs->NgayThangNamSinh_User ?? '' }}',
-                                    '{{ $hs->TrangThaiHoatDong_User }}'
-                                )">Sửa</button>
+                                    <button class="btn-edit" onclick="openEdit(
+                                        {{ $hs->ID_User }},
+                                        '{{ addslashes($hs->HoVaTen_User) }}',
+                                        '{{ $hs->EmailCaNhan_User ?? '' }}',
+                                        '{{ $hs->SoDienThoai_User ?? '' }}',
+                                        '{{ $hs->NgayThangNamSinh_User ?? '' }}',
+                                        '{{ $hs->TrangThaiHoatDong_User }}'
+                                    )">Sửa</button>
 
-                                <form method="POST"
-                                      action="{{ route('admin.hoc-sinh.destroy', $hs->ID_User) }}"
-                                      style="display:inline"
-                                      onsubmit="return confirm('Xóa học sinh {{ addslashes($hs->HoVaTen_User) }}?\nLưu ý: dữ liệu thành viên lớp học sẽ bị xóa theo.')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn-danger">Xóa</button>
-                                </form>
+                                    <form method="POST"
+                                          action="{{ route('admin.hoc-sinh.destroy', $hs->ID_User) }}"
+                                          style="display:inline"
+                                          onsubmit="return confirm('Xóa học sinh {{ addslashes($hs->HoVaTen_User) }}?\nLưu ý: dữ liệu thành viên lớp học sẽ bị xóa theo.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-danger">Xóa</button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                         @empty
@@ -170,7 +189,8 @@
 </div>
 
 <script>
-    window.PAGE_ROLE   = 'admin';
+    window.PAGE_USER_NAME = "{{ session('auth.name') }}";
+      window.PAGE_ROLE   = 'admin';
     window.PAGE_ACTIVE = 'quanly-hocsinh';
 
     const storeUrl  = "{{ route('admin.hoc-sinh.store') }}";
