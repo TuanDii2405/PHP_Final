@@ -6,6 +6,9 @@ use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Student\StudentExamController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Student\ProfileController;
+use App\Http\Controllers\Student\HistoryController;
+use App\Http\Controllers\Student\RankingController;
 
 // Root redirect
 Route::get('/', [AuthController::class, 'redirectHome']);
@@ -78,8 +81,17 @@ Route::prefix('giao-vien')->name('teacher.')->middleware(['auth.check', 'role:te
     Route::get('/dung-sai',     [TeacherController::class, 'tracNghiemDungSai'])->name('dung-sai');
     Route::get('/tra-loi-ngan', [TeacherController::class, 'tracNghiemTraLoiNgan'])->name('tra-loi-ngan');
     Route::get('/diem-danh',    [TeacherController::class, 'diemDanh'])->name('diem-danh');
-    Route::get('/thong-tin',    [TeacherController::class, 'thongTin'])->name('thong-tin');
+    // Thêm dòng này vào trong nhóm route 'giao-vien'
+Route::get('/thong-tin/chinh-sua', [TeacherController::class, 'editProfile'])->name('profile-edit');
+Route::get('/thong-tin', [TeacherController::class, 'thongTin'])->name('thong-tin');
+Route::post('/thong-tin', [TeacherController::class, 'capNhatThongTin'])->name('thong-tin.update');
+   Route::post('/doi-mat-khau', [TeacherController::class, 'xuLyDoiMatKhau'])->name('doi-mat-khau.xu-ly');
+// 1. Dòng này để hiển thị trang (khi click vào menu)
     Route::get('/doi-mat-khau', [TeacherController::class, 'doiMatKhau'])->name('doi-mat-khau');
+
+    // 2. Dòng này để xử lý form (khi bấm nút "Xác nhận đổi mật khẩu")
+    Route::post('/doi-mat-khau', [TeacherController::class, 'xuLyDoiMatKhau'])->name('doi-mat-khau.xu-ly');
+Route::post('/thong-tin/cap-nhat', [TeacherController::class, 'capNhatThongTin'])->name('profile-update');
 });
 
 // Student
@@ -87,10 +99,10 @@ Route::prefix('hoc-sinh')->name('student.')->middleware(['auth.check', 'role:stu
     Route::get('/',            [StudentController::class, 'dashboard'])->name('dashboard');
     Route::get('/lop-hoc',     [StudentController::class, 'lopHoc'])->name('lop-hoc');
     Route::get('/ky-thi',      [StudentController::class, 'kyThi'])->name('ky-thi');
-    Route::get('/lich-su-bai', [StudentController::class, 'lichSuLamBai'])->name('lich-su-bai');
-    Route::get('/diem-danh',   [StudentController::class, 'diemDanh'])->name('diem-danh');
-    Route::get('/thong-tin',   [StudentController::class, 'thongTin'])->name('thong-tin');
-    Route::get('/xep-hang',    [StudentController::class, 'xepHang'])->name('xep-hang');
+    Route::get('/lich-su-bai', [HistoryController::class, 'examHistory'])->name('lich-su-bai');
+    Route::get('/diem-danh', [HistoryController::class, 'attendanceHistory'])->name('diem-danh');
+    Route::get('/thong-tin', [ProfileController::class, 'index'])->name('thong-tin');
+    Route::get('/xep-hang', [RankingController::class, 'index'])->name('ranking');
 
     Route::get('/tham-gia-thi',  [StudentExamController::class, 'loadExam'])->name('tham-gia-thi');
     Route::post('/tham-gia-thi', [StudentExamController::class, 'submitExam'])->name('nop-bai-thi');

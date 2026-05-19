@@ -14,35 +14,35 @@
         <div class="role-title-box"><h2>VAI TRÒ HỌC SINH</h2></div>
         <div class="content-box">
             <div class="section-title blue">Thông tin cá nhân</div>
-            @if ($student)
+            @if ($user)
             <table class="info-table" style="max-width:620px">
                 <tr>
                     <td class="info-label">Họ và tên</td>
-                    <td><span class="info-value">{{ $student->HoVaTen_User }}</span></td>
+                    <td><span class="info-value">{{ $user->HoVaTen_User }}</span></td>
                 </tr>
                 <tr>
                     <td class="info-label">Ngày sinh</td>
-                    <td><span class="info-value">{{ $student->NgayThangNamSinh_User ? \Carbon\Carbon::parse($student->NgayThangNamSinh_User)->format('d/m/Y') : '—' }}</span></td>
+                    <td><span class="info-value">{{ $user->NgayThangNamSinh_User ? \Carbon\Carbon::parse($user->NgayThangNamSinh_User)->format('d/m/Y') : '—' }}</span></td>
                 </tr>
                 <tr>
                     <td class="info-label">Email</td>
-                    <td><span class="info-value">{{ $student->EmailCaNhan_User ?? '—' }}</span></td>
+                    <td><span class="info-value">{{ $user->EmailCaNhan_User ?? '—' }}</span></td>
                 </tr>
                 <tr>
                     <td class="info-label">Số điện thoại</td>
-                    <td><span class="info-value">{{ $student->SoDienThoai_User ?? '—' }}</span></td>
+                    <td><span class="info-value">{{ $user->SoDienThoai_User ?? '—' }}</span></td>
                 </tr>
                 <tr>
                     <td class="info-label">Số kỳ thi đã làm</td>
-                    <td><span class="info-value">{{ $student->so_ky_thi }} bài thi</span></td>
+                    <td><span class="info-value">{{ $examCount }} bài thi</span></td>
                 </tr>
                 <tr>
                     <td class="info-label">Ngày đăng ký</td>
-                    <td><span class="info-value">{{ \Carbon\Carbon::parse($student->NgayTaoTaiKhoan_User)->format('d/m/Y') }}</span></td>
+                    <td><span class="info-value">{{ \Carbon\Carbon::parse($user->NgayTaoTaiKhoan_User)->format('d/m/Y') }}</span></td>
                 </tr>
                 <tr>
                     <td class="info-label">Trạng thái</td>
-                    <td><span class="info-value">{{ $student->TrangThaiHoatDong_User === 'active' ? 'Hoạt động' : 'Không hoạt động' }}</span></td>
+                    <td><span class="info-value">{{ $user->TrangThaiHoatDong_User === 'active' ? 'Hoạt động' : 'Bị khóa' }}</span></td>
                 </tr>
             </table>
             @else

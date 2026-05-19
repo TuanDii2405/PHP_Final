@@ -42,7 +42,7 @@
                 </tr>
                 <tr>
                     <td class="info-label">Số lớp đang dạy</td>
-                    <td><span class="info-value">{{ $teacher->so_lop }} lớp</span></td>
+                    <td><span class="info-value">{{ $teacher->so_lop ?? 0 }} lớp</span></td>
                 </tr>
                 <tr>
                     <td class="info-label">Ngày tham gia</td>
@@ -50,7 +50,7 @@
                 </tr>
             </table>
             <br>
-            <button class="btn-primary" onclick="alert('Cập nhật thông tin!')">Cập nhật thông tin</button>
+            <a href="{{ route('teacher.profile-edit') }}" class="btn-primary">Cập nhật thông tin</a>
             @else
             <div class="empty-notice">Không tìm thấy thông tin tài khoản.</div>
             @endif

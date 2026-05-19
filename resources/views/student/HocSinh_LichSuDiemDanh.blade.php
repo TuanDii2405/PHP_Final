@@ -27,14 +27,22 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($diemDanhs as $i => $dd)
+                        {{-- Sử dụng biến $attendances và các tên cột khớp với Controller --}}
+                        @forelse ($attendances as $i => $dd)
                         <tr>
                             <td>{{ $i + 1 }}</td>
                             <td>{{ $dd->TenLopHoc }}</td>
-                            <td>{{ $dd->ten_giao_vien }}</td>
+                            <td>{{ $dd->TenGiaoVien }}</td>
                             <td>{{ $dd->Ten_MonHoc }}</td>
                             <td>{{ \Carbon\Carbon::parse($dd->NgayHoc_DiemDanh)->format('d/m/Y') }}</td>
-                            <td>{{ $dd->TrangThaiBuoiHoc_DiemDanh }}</td>
+                            <td>
+                                {{-- Làm đẹp trạng thái buổi học --}}
+                                @if($dd->TrangThaiBuoiHoc_DiemDanh == 'completed')
+                                    Đã hoàn thành
+                                @else
+                                    {{ $dd->TrangThaiBuoiHoc_DiemDanh }}
+                                @endif
+                            </td>
                         </tr>
                         @empty
                         <tr><td colspan="6" class="empty-notice">Chưa có dữ liệu điểm danh</td></tr>

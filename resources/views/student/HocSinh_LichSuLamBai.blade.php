@@ -33,22 +33,22 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($lichSus as $ls)
+                        @forelse ($histories as $ls)
                         <tr>
                             <td>{{ $ls->Ten_KyThi }}</td>
                             <td>{{ $ls->Ten_MonHoc }}</td>
                             <td>{{ \Carbon\Carbon::parse($ls->ThoiGianKetThuc_DiemSo)->format('H:i d/m/Y') }}</td>
-                            <td>{{ number_format($ls->TongDiem_DiemSo, 2) }}</td>
+                            <td style="font-weight: bold; color: #d9534f;">{{ number_format($ls->TongDiem_DiemSo, 2) }}</td>
                             <td>{{ $ls->ThoiGianLamBai_DiemSo }}</td>
                             <td>{{ number_format($ls->DiemPhanTracNghiem4PhuongAn_DiemSo, 2) }}</td>
                             <td>{{ number_format($ls->DiemPhanTracNghiemDungSai_DiemSo, 2) }}</td>
                             <td>{{ number_format($ls->DiemPhanTracNghiemTraLoiNgan_DiemSo, 2) }}</td>
                             <td>
-                                <a class="tbl-link" onclick="alert('Xem chi tiết bài thi!')">Xem chi tiết</a>
+                                <a class="tbl-link" onclick="alert('Xem chi tiết bài thi!')" style="cursor: pointer; text-decoration: underline; color: #0d6efd;">Xem chi tiết</a>
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="9" class="empty-notice">Bạn chưa tham gia kỳ thi nào</td></tr>
+                        <tr><td colspan="9" class="empty-notice" style="text-align: center; padding: 20px;">Bạn chưa tham gia kỳ thi nào</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -56,7 +56,7 @@
         </div>
     </main>
 </div>
-<script>window.PAGE_ROLE = 'hocsinh'; window.PAGE_ACTIVE = 'hs-lichsu-lamdai';</script>
+<script>window.PAGE_ROLE = 'hocsinh'; window.PAGE_ACTIVE = 'hs-lichsu-lambai';</script>
 <script src="{{ asset('assets/js/layout.js') }}"></script>
 </body>
 </html>
