@@ -35,7 +35,10 @@
                             $batDau = $kt->ThoiGianBatDau_KyThi ? \Carbon\Carbon::parse($kt->ThoiGianBatDau_KyThi) : null;
                             $ketThuc = $kt->ThoiGianKetThuc_KyThi ? \Carbon\Carbon::parse($kt->ThoiGianKetThuc_KyThi) : null;
                             $now = now();
-                            $dangMo = $batDau && $ketThuc && $now->between($batDau, $ketThuc);
+                            // Nhất quán với loadExam: NULL end-time = không giới hạn kết thúc
+                            $chuaBatDau = $batDau && $now->lt($batDau);
+                            $daKetThuc  = $ketThuc && $now->gt($ketThuc);
+                            $dangMo     = !$chuaBatDau && !$daKetThuc;
                         @endphp
                         <tr>
                             <td>{{ $kt->Ten_KyThi }}</td>
@@ -44,12 +47,10 @@
                             <td>{{ $kt->ThoiGianLamBai_KyThi }}</td>
                             <td>{{ $kt->SoCauHoiTracNghiem4PhuongAn_KyThi }}|{{ $kt->SoCauHoiTracNghiemDungSai_KyThi }}|{{ $kt->SoCauHoiTracNghiemTraLoiNgan_KyThi }}</td>
                             <td>
-                                @if ($kt->da_nop)
-                                    <span style="color:#27ae60;font-size:12px;font-weight:600">Đã hoàn thành</span>
-                                @elseif ($dangMo)
+                                @if ($dangMo)
                                     <a class="tbl-link" href="{{ route('student.tham-gia-thi', ['id_kythi' => $kt->ID_KyThi]) }}">Tham gia thi</a>
                                 @else
-                                    <span style="color:#aaa;font-size:12px">{{ $batDau && $now->lt($batDau) ? 'Chưa mở' : 'Đã kết thúc' }}</span>
+                                    <span style="color:#aaa;font-size:12px">{{ $chuaBatDau ? 'Chưa mở' : 'Đã kết thúc' }}</span>
                                 @endif
                             </td>
                         </tr>

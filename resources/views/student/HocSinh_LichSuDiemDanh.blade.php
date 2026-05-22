@@ -24,6 +24,7 @@
                             <th>Môn học</th>
                             <th>Ngày học</th>
                             <th>Trạng thái buổi</th>
+                            <th>Tình trạng điểm danh</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -46,9 +47,22 @@
                                 @endphp
                                 {{ $trangThai }}
                             </td>
+                            <td>
+                                @if ($dd->tinh_trang_ca_nhan === 'present')
+                                    <span style="color:#198754;font-weight:600">Có mặt</span>
+                                @elseif ($dd->tinh_trang_ca_nhan === 'absent')
+                                    <span style="color:#dc3545;font-weight:600">Vắng mặt</span>
+                                @elseif ($dd->tinh_trang_ca_nhan === 'late')
+                                    <span style="color:#fd7e14;font-weight:600">Đi trễ</span>
+                                @elseif ($dd->tinh_trang_ca_nhan === 'excused')
+                                    <span style="color:#6c757d;font-weight:600">Có phép</span>
+                                @else
+                                    <span style="color:#aaa">Chưa điểm danh</span>
+                                @endif
+                            </td>
                         </tr>
                         @empty
-                        <tr><td colspan="6" class="empty-notice">Chưa có dữ liệu điểm danh</td></tr>
+                        <tr><td colspan="7" class="empty-notice">Chưa có dữ liệu điểm danh</td></tr>
                         @endforelse
                     </tbody>
                 </table>

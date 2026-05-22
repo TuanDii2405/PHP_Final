@@ -71,16 +71,19 @@ class StudentController extends Controller
             [$studentId]
         );
 
-        // Lịch học (buổi điểm danh) của từng lớp, nhóm theo ID_LopHoc
+        // Lịch học (buổi điểm danh) của từng lớp kèm trạng thái đơn xin vắng
         $lichHocRaw = DB::select(
-            "SELECT dd.ID_LopHoc, dd.NgayHoc_DiemDanh,
+            "SELECT dd.ID_DiemDanh, dd.ID_LopHoc, dd.NgayHoc_DiemDanh,
                     dd.ThoiGianBatDau_DiemDanh, dd.ThoiGianKetThuc_DiemDanh,
-                    dd.TrangThaiBuoiHoc_DiemDanh
+                    dd.TrangThaiBuoiHoc_DiemDanh,
+                    dxn.ID_DonXinNghi, dxn.TrangThai_DonXinNghi
              FROM Diem_danh dd
              JOIN Lop_hoc_ThanhVien lv ON dd.ID_LopHoc = lv.ID_LopHoc
+             LEFT JOIN Don_xin_nghi dxn
+                    ON dxn.ID_DiemDanh = dd.ID_DiemDanh AND dxn.ID_User = ?
              WHERE lv.ID_Student = ?
              ORDER BY dd.NgayHoc_DiemDanh ASC, dd.ThoiGianBatDau_DiemDanh ASC",
-            [$studentId]
+            [$studentId, $studentId]
         );
 
         $lichHoc = [];
@@ -95,15 +98,13 @@ class StudentController extends Controller
     {
         $studentId = $request->session()->get('auth.id');
         $kyThis = DB::select(
-            "SELECT DISTINCT kt.*, m.Ten_MonHoc,
-                    IF(ds.ID_DiemSo IS NOT NULL, 1, 0) as da_nop
+            "SELECT DISTINCT kt.*, m.Ten_MonHoc
              FROM Ky_thi kt
              JOIN Mon_Hoc m ON kt.ID_MonHoc = m.ID_MonHoc
              JOIN Lop_hoc_ThanhVien lv ON kt.ID_LopHoc = lv.ID_LopHoc
-             LEFT JOIN Diem_so ds ON ds.ID_MaKyThi = kt.ID_KyThi AND ds.ID_User = ?
              WHERE lv.ID_Student = ?
              ORDER BY kt.ThoiGianBatDau_KyThi",
-            [$studentId, $studentId]
+            [$studentId]
         );
         return view('student.HocSinh_DanhSachKyThi', compact('kyThis'));
     }
@@ -112,7 +113,8 @@ class StudentController extends Controller
     {
         $studentId = $request->session()->get('auth.id');
         $lichSus = DB::select(
-            "SELECT ds.*, kt.Ten_KyThi, dt.TenDeThi, m.Ten_MonHoc
+            "SELECT ds.*, kt.Ten_KyThi, dt.TenDeThi, m.Ten_MonHoc,
+                    kt.CheDo_XemKetQua_KyThi as che_do_xem
              FROM Diem_so ds
              JOIN Ky_thi kt ON ds.ID_MaKyThi = kt.ID_KyThi
              JOIN De_Thi dt ON ds.ID_MaDeThi = dt.ID_MaDeThi
@@ -138,6 +140,14 @@ class StudentController extends Controller
              ORDER BY dd.NgayHoc_DiemDanh DESC",
             [$studentId]
         );
+
+        foreach ($diemDanhs as $dd) {
+            $chiTiet = $dd->ChiTietDiemDanh_DiemDanh
+                ? json_decode($dd->ChiTietDiemDanh_DiemDanh, true)
+                : [];
+            $dd->tinh_trang_ca_nhan = $chiTiet[$studentId] ?? null;
+        }
+
         return view('student.HocSinh_LichSuDiemDanh', compact('diemDanhs'));
     }
 
@@ -179,7 +189,7 @@ class StudentController extends Controller
         foreach ($lopHocs as $lop) {
             $rows = DB::select(
                 "SELECT u.ID_User, u.HoVaTen_User,
-                        COALESCE(AVG(ds.TongDiem_DiemSo), 0) as diem_tb,
+                        COALESCE(SUM(ds.TongDiem_DiemSo), 0) as tong_diem,
                         COUNT(DISTINCT ds.ID_DiemSo) as so_bai
                  FROM Lop_hoc_ThanhVien lv2
                  JOIN `User` u ON lv2.ID_Student = u.ID_User
@@ -188,7 +198,7 @@ class StudentController extends Controller
                                     AND ds.ID_User = lv2.ID_Student
                  WHERE lv2.ID_LopHoc = ?
                  GROUP BY u.ID_User, u.HoVaTen_User
-                 ORDER BY diem_tb DESC",
+                 ORDER BY tong_diem DESC",
                 [$lop->ID_LopHoc]
             );
 
@@ -256,8 +266,68 @@ class StudentController extends Controller
 
         DB::table('User')
             ->where('ID_User', $studentId)
-            ->update(['Pass_User' => md5($matKhauMoi)]);
+            ->update(['Pass_User' => password_hash($matKhauMoi, PASSWORD_BCRYPT)]);
 
         return redirect()->route('student.thong-tin')->with('success', 'Đổi mật khẩu thành công!');
+    }
+
+    public function xinVangStore(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ID_DiemDanh'      => 'required|integer',
+            'NoiDung_DonXinNghi' => 'required|string|max:1000',
+        ]);
+
+        $studentId   = session('auth.id');
+        $idDiemDanh  = (int) $request->input('ID_DiemDanh');
+
+        // Xác nhận buổi học thuộc lớp mà học sinh đang học
+        $session = DB::selectOne(
+            "SELECT dd.ID_DiemDanh, dd.ID_LopHoc, dd.TrangThaiBuoiHoc_DiemDanh,
+                    dd.NgayHoc_DiemDanh, dd.ThoiGianBatDau_DiemDanh
+             FROM Diem_danh dd
+             JOIN Lop_hoc_ThanhVien lv ON dd.ID_LopHoc = lv.ID_LopHoc
+             WHERE dd.ID_DiemDanh = ? AND lv.ID_Student = ?",
+            [$idDiemDanh, $studentId]
+        );
+
+        if (!$session) {
+            return back()->with('error', 'Buổi học không hợp lệ.');
+        }
+
+        if (!in_array($session->TrangThaiBuoiHoc_DiemDanh, ['scheduled', 'in_progress'])) {
+            return back()->with('error', 'Chỉ có thể xin vắng khi buổi học chưa kết thúc.');
+        }
+
+        $batDauDt = $session->NgayHoc_DiemDanh && $session->ThoiGianBatDau_DiemDanh
+            ? \Carbon\Carbon::parse(
+                \Carbon\Carbon::parse($session->NgayHoc_DiemDanh)->format('Y-m-d') . ' ' .
+                \Carbon\Carbon::parse($session->ThoiGianBatDau_DiemDanh)->format('H:i:s')
+              )
+            : null;
+        if (!$batDauDt || now()->gte($batDauDt->subHour())) {
+            return back()->with('error', 'Hết hạn báo vắng. Chỉ có thể xin vắng trước giờ học ít nhất 1 tiếng.');
+        }
+
+        // Kiểm tra đã có đơn chưa
+        $existing = DB::selectOne(
+            "SELECT ID_DonXinNghi FROM Don_xin_nghi WHERE ID_DiemDanh = ? AND ID_User = ?",
+            [$idDiemDanh, $studentId]
+        );
+
+        if ($existing) {
+            return back()->with('error', 'Bạn đã gửi đơn xin vắng cho buổi học này rồi.');
+        }
+
+        DB::table('Don_xin_nghi')->insert([
+            'ID_LopHoc'            => $session->ID_LopHoc,
+            'ID_User'              => $studentId,
+            'ID_DiemDanh'          => $idDiemDanh,
+            'ThoiGianGui_DonXinNghi' => now(),
+            'NoiDung_DonXinNghi'   => $request->input('NoiDung_DonXinNghi'),
+            'TrangThai_DonXinNghi' => 'pending',
+        ]);
+
+        return back()->with('success', 'Đã gửi đơn xin vắng thành công! Vui lòng chờ giáo viên duyệt.');
     }
 }

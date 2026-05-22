@@ -92,7 +92,7 @@ class TeacherController extends Controller
         $teacherId = $request->session()->get('auth.id');
         $lopHocs = DB::select(
             "SELECT l.ID_LopHoc, l.TenLopHoc, l.NamHoc,
-                    l.ID_KhoiLop, l.ID_MonHoc, l.ID_Teacher, l.ID_Student,
+                    l.ID_KhoiLop, l.ID_MonHoc, l.ID_Teacher,
                     k.Ten_KhoiLop, m.Ten_MonHoc,
                     COUNT(lv.ID_Student) as so_hoc_sinh
              FROM Lop_hoc l
@@ -101,7 +101,7 @@ class TeacherController extends Controller
              LEFT JOIN Lop_hoc_ThanhVien lv ON l.ID_LopHoc = lv.ID_LopHoc
              WHERE l.ID_Teacher = ?
              GROUP BY l.ID_LopHoc, l.TenLopHoc, l.NamHoc,
-                      l.ID_KhoiLop, l.ID_MonHoc, l.ID_Teacher, l.ID_Student,
+                      l.ID_KhoiLop, l.ID_MonHoc, l.ID_Teacher,
                       k.Ten_KhoiLop, m.Ten_MonHoc
              ORDER BY l.ID_LopHoc",
             [$teacherId]
@@ -349,6 +349,12 @@ class TeacherController extends Controller
 
     public function deThiCauHoiDestroy(int $id, int $chiTietId): RedirectResponse
     {
+        $deThi = DB::table('De_Thi')
+            ->where('ID_MaDeThi', $id)
+            ->where('ID_NguoiTao', session('auth.id'))
+            ->first();
+        abort_if(!$deThi, 403);
+
         DB::table('De_Thi_Chi_Tiet')
             ->where('ID_DeThiChiTiet', $chiTietId)
             ->where('ID_MaDeThi', $id)
@@ -904,6 +910,7 @@ class TeacherController extends Controller
             'PhanBoDiemTracNghiem4PhuongAn_KyThi'    => 'required|numeric|min:0',
             'PhanBoDiemTracNghiemDungSai_KyThi'      => 'required|numeric|min:0',
             'PhanBoDiemTracNghiemTraLoiNgan_KyThi'   => 'required|numeric|min:0',
+            'CheDo_XemKetQua_KyThi'                  => 'required|integer|in:1,2,3',
         ]);
 
         $lop = DB::table('Lop_hoc')
@@ -911,6 +918,13 @@ class TeacherController extends Controller
             ->where('ID_Teacher', $teacherId)
             ->first();
         abort_if(!$lop, 403);
+
+        $totalDiem = (float)$data['PhanBoDiemTracNghiem4PhuongAn_KyThi']
+                   + (float)$data['PhanBoDiemTracNghiemDungSai_KyThi']
+                   + (float)$data['PhanBoDiemTracNghiemTraLoiNgan_KyThi'];
+        if (abs($totalDiem - 10.0) > 0.001) {
+            return back()->withErrors(['diem' => 'Tổng phân bổ điểm phải bằng 10 (hiện tại: ' . round($totalDiem, 2) . ').'])->withInput();
+        }
 
         $countErrors = $this->checkDeThiSoCau((int) $data['ID_MaDeThi'], $data);
         if ($countErrors) {
@@ -941,6 +955,7 @@ class TeacherController extends Controller
             'PhanBoDiemTracNghiem4PhuongAn_KyThi'    => 'required|numeric|min:0',
             'PhanBoDiemTracNghiemDungSai_KyThi'      => 'required|numeric|min:0',
             'PhanBoDiemTracNghiemTraLoiNgan_KyThi'   => 'required|numeric|min:0',
+            'CheDo_XemKetQua_KyThi'                  => 'required|integer|in:1,2,3',
         ]);
 
         $kt = DB::selectOne(
@@ -950,6 +965,13 @@ class TeacherController extends Controller
             [$id, $teacherId]
         );
         abort_if(!$kt, 403);
+
+        $totalDiem = (float)$data['PhanBoDiemTracNghiem4PhuongAn_KyThi']
+                   + (float)$data['PhanBoDiemTracNghiemDungSai_KyThi']
+                   + (float)$data['PhanBoDiemTracNghiemTraLoiNgan_KyThi'];
+        if (abs($totalDiem - 10.0) > 0.001) {
+            return back()->withErrors(['diem' => 'Tổng phân bổ điểm phải bằng 10 (hiện tại: ' . round($totalDiem, 2) . ').'])->withInput();
+        }
 
         $countErrors = $this->checkDeThiSoCau((int) $data['ID_MaDeThi'], $data);
         if ($countErrors) {
@@ -1058,17 +1080,25 @@ class TeacherController extends Controller
         $teacherId = session('auth.id');
         $user = DB::table('User')->where('ID_User', $teacherId)->first();
 
-        if (!$user || md5($request->mat_khau_cu) !== $user->Pass_User) {
+        $matKhauCu  = $request->input('mat_khau_cu');
+        $matKhauMoi = $request->input('mat_khau_moi');
+
+        $stored  = (string) ($user->Pass_User ?? '');
+        $isValid = password_get_info($stored)['algo'] !== null
+            ? password_verify($matKhauCu, $stored)
+            : hash_equals($stored, md5($matKhauCu));
+
+        if (!$user || !$isValid) {
             return back()->withErrors(['mat_khau_cu' => 'Mật khẩu hiện tại không đúng.'])->withInput();
         }
 
-        if ($request->mat_khau_cu === $request->mat_khau_moi) {
+        if ($matKhauCu === $matKhauMoi) {
             return back()->withErrors(['mat_khau_moi' => 'Mật khẩu mới không được trùng mật khẩu cũ.'])->withInput();
         }
 
         DB::table('User')
             ->where('ID_User', $teacherId)
-            ->update(['Pass_User' => md5($request->mat_khau_moi)]);
+            ->update(['Pass_User' => password_hash($matKhauMoi, PASSWORD_BCRYPT)]);
 
         return redirect()->route('teacher.doi-mat-khau')->with('success', 'Đổi mật khẩu thành công!');
     }
