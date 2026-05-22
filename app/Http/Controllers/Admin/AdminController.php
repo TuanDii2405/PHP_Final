@@ -120,7 +120,7 @@ class AdminController extends Controller
             'PhuTrachMon_User'       => $data['PhuTrachMon_User'] ?? null,
             'PhuTrachKhoi_User'      => $data['PhuTrachKhoi_User'] ?? null,
             'PhanQuyen_User'         => 'teacher',
-            'Pass_User'              => md5($data['mat_khau']),
+            'Pass_User'              => password_hash($data['mat_khau'], PASSWORD_BCRYPT),
             'NgayTaoTaiKhoan_User'   => now(),
         ]);
 
@@ -151,7 +151,7 @@ class AdminController extends Controller
         ];
 
         if (!empty($data['mat_khau'])) {
-            $update['Pass_User'] = md5($data['mat_khau']);
+            $update['Pass_User'] = password_hash($data['mat_khau'], PASSWORD_BCRYPT);
         }
 
         DB::table('User')
@@ -459,6 +459,13 @@ class AdminController extends Controller
             'PhanBoDiemTracNghiemTraLoiNgan_KyThi'   => 'required|numeric|min:0',
         ]);
 
+        $totalDiem = (float)$data['PhanBoDiemTracNghiem4PhuongAn_KyThi']
+                   + (float)$data['PhanBoDiemTracNghiemDungSai_KyThi']
+                   + (float)$data['PhanBoDiemTracNghiemTraLoiNgan_KyThi'];
+        if (abs($totalDiem - 10.0) > 0.001) {
+            return back()->withErrors(['diem' => 'Tổng phân bổ điểm phải bằng 10 (hiện tại: ' . round($totalDiem, 2) . ').'])->withInput();
+        }
+
         $countErrors = $this->checkDeThiSoCau((int) $data['ID_MaDeThi'], $data);
         if ($countErrors) {
             return back()->withErrors($countErrors)->withInput();
@@ -488,6 +495,13 @@ class AdminController extends Controller
             'PhanBoDiemTracNghiemDungSai_KyThi'      => 'required|numeric|min:0',
             'PhanBoDiemTracNghiemTraLoiNgan_KyThi'   => 'required|numeric|min:0',
         ]);
+
+        $totalDiem = (float)$data['PhanBoDiemTracNghiem4PhuongAn_KyThi']
+                   + (float)$data['PhanBoDiemTracNghiemDungSai_KyThi']
+                   + (float)$data['PhanBoDiemTracNghiemTraLoiNgan_KyThi'];
+        if (abs($totalDiem - 10.0) > 0.001) {
+            return back()->withErrors(['diem' => 'Tổng phân bổ điểm phải bằng 10 (hiện tại: ' . round($totalDiem, 2) . ').'])->withInput();
+        }
 
         $countErrors = $this->checkDeThiSoCau((int) $data['ID_MaDeThi'], $data);
         if ($countErrors) {
@@ -997,7 +1011,7 @@ class AdminController extends Controller
             'NgayThangNamSinh_User'  => $data['NgayThangNamSinh_User'] ?? null,
             'TrangThaiHoatDong_User' => $data['TrangThaiHoatDong_User'],
             'PhanQuyen_User'         => 'student',
-            'Pass_User'              => md5($data['mat_khau']),
+            'Pass_User'              => password_hash($data['mat_khau'], PASSWORD_BCRYPT),
             'NgayTaoTaiKhoan_User'   => now(),
         ]);
 
@@ -1024,7 +1038,7 @@ class AdminController extends Controller
         ];
 
         if (!empty($data['mat_khau'])) {
-            $update['Pass_User'] = md5($data['mat_khau']);
+            $update['Pass_User'] = password_hash($data['mat_khau'], PASSWORD_BCRYPT);
         }
 
         DB::table('User')

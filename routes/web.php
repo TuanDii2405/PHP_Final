@@ -146,4 +146,7 @@ Route::prefix('hoc-sinh')->name('student.')->middleware(['auth.check', 'role:stu
 
     Route::get('/tham-gia-thi',  [StudentExamController::class, 'loadExam'])->name('tham-gia-thi');
     Route::post('/tham-gia-thi', [StudentExamController::class, 'submitExam'])->name('nop-bai-thi');
+    Route::get('/xem-lai-bai/{id}', [StudentExamController::class, 'reviewExam'])->name('xem-lai-bai');
+
+    Route::post('/xin-vang', [StudentController::class, 'xinVangStore'])->name('xin-vang.store');
 });

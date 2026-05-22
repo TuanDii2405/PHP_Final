@@ -34,6 +34,7 @@
                     </thead>
                     <tbody>
                         @forelse ($lichSus as $ls)
+                        @php $cheDoXem = (int)($ls->che_do_xem ?? 1); @endphp
                         <tr>
                             <td>{{ $ls->Ten_KyThi }}</td>
                             <td>{{ $ls->Ten_MonHoc }}</td>
@@ -44,7 +45,17 @@
                             <td>{{ number_format($ls->DiemPhanTracNghiemDungSai_DiemSo, 2) }}</td>
                             <td>{{ number_format($ls->DiemPhanTracNghiemTraLoiNgan_DiemSo, 2) }}</td>
                             <td>
-                                <a class="tbl-link" onclick="alert('Xem chi tiết bài thi!')">Xem chi tiết</a>
+                                @if ($cheDoXem === 3)
+                                    <span style="color:#aaa;font-size:.82rem"><i class="bi bi-eye-slash"></i> Không được xem</span>
+                                @else
+                                    <a class="tbl-link" href="{{ route('student.xem-lai-bai', $ls->ID_DiemSo) }}">
+                                        @if ($cheDoXem === 2)
+                                            <i class="bi bi-file-text"></i> Xem bài làm
+                                        @else
+                                            <i class="bi bi-eye"></i> Xem chi tiết
+                                        @endif
+                                    </a>
+                                @endif
                             </td>
                         </tr>
                         @empty

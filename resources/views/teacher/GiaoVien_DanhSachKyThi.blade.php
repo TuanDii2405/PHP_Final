@@ -20,6 +20,8 @@
         #totalDiem { font-weight: 700; }
         #totalDiem.ok  { color: #256029; }
         #totalDiem.err { color: var(--jasper); }
+        .field-error { display:block; font-size:12px; color:#c0392b; margin-top:3px; min-height:16px; }
+        .input-invalid { border-color:#c0392b !important; }
     </style>
 </head>
 <body>
@@ -107,9 +109,11 @@
             <span class="modal-header-title" id="modalTitle">Tạo kỳ thi mới</span>
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
-        <form id="modalForm" method="POST" action="{{ route('teacher.ky-thi.store') }}">
+        <form id="modalForm" method="POST" action="{{ route('teacher.ky-thi.store') }}"
+              novalidate onsubmit="return clientValidate()">
             @csrf
-            <input type="hidden" name="_method" id="formMethod" value="POST">
+            <input type="hidden" name="_method"   id="formMethod" value="POST">
+            <input type="hidden" name="_edit_id"  id="formEditId" value="">
 
             <div class="modal-body">
                 <div class="modal-section">Thông tin cơ bản</div>
@@ -117,7 +121,9 @@
                 <div class="form-group">
                     <label class="form-label">Tên kỳ thi <span class="required">*</span></label>
                     <input class="form-input" type="text" name="Ten_KyThi" id="f_ten"
-                           placeholder="VD: Kiểm tra học kỳ 1 – Toán 10A1" required maxlength="150">
+                           placeholder="VD: Kiểm tra học kỳ 1 – Toán 10A1" maxlength="150"
+                           oninput="clearErr('err_ten')">
+                    <span class="field-error" id="err_ten"></span>
                 </div>
 
                 <div class="form-group">
@@ -131,44 +137,54 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Khối lớp <span class="required">*</span></label>
-                        <select class="form-select" name="ID_KhoiLop" id="f_khoi" required onchange="cascadeFilter()">
+                        <select class="form-select" name="ID_KhoiLop" id="f_khoi"
+                                onchange="clearErr('err_khoi'); cascadeFilter()">
                             <option value="">— Chọn khối —</option>
                             @foreach ($khoiLops as $kl)
                                 <option value="{{ $kl->ID_KhoiLop }}">{{ $kl->Ten_KhoiLop }}</option>
                             @endforeach
                         </select>
+                        <span class="field-error" id="err_khoi"></span>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Môn học <span class="required">*</span></label>
-                        <select class="form-select" name="ID_MonHoc" id="f_mon" required onchange="cascadeFilter()">
+                        <select class="form-select" name="ID_MonHoc" id="f_mon"
+                                onchange="clearErr('err_mon'); cascadeFilter()">
                             <option value="">— Chọn môn —</option>
                             @foreach ($monHocs as $mh)
                                 <option value="{{ $mh->ID_MonHoc }}">{{ $mh->Ten_MonHoc }}</option>
                             @endforeach
                         </select>
+                        <span class="field-error" id="err_mon"></span>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Lớp học <span class="required">*</span></label>
-                        <select class="form-select" name="ID_LopHoc" id="f_lophoc" required>
+                        <select class="form-select" name="ID_LopHoc" id="f_lophoc"
+                                onchange="clearErr('err_lophoc')">
                             <option value="">— Chọn lớp —</option>
                         </select>
+                        <span class="field-error" id="err_lophoc"></span>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Chủ đề <span class="required">*</span></label>
-                        <select class="form-select" name="ID_ChuDe" id="f_chude" required>
+                        <select class="form-select" name="ID_ChuDe" id="f_chude"
+                                onchange="clearErr('err_chude')">
                             <option value="">— Chọn chủ đề —</option>
                         </select>
+                        <span class="field-error" id="err_chude"></span>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Đề thi <span class="required">*</span></label>
-                    <select class="form-select" name="ID_MaDeThi" id="f_dethi" required onchange="loadDeThiCount()">
+                    <select class="form-select" name="ID_MaDeThi" id="f_dethi"
+                            onchange="clearErr('err_dethi'); loadDeThiCount()">
                         <option value="">— Chọn đề thi —</option>
                     </select>
+                    <span class="field-error" id="err_dethi"></span>
                     <div id="dethi-count-hint" style="margin-top:4px;font-size:12px;color:var(--text-soft);display:none">
                         Số câu trong đề thi:
                         <strong>4PA: <span id="hint-4pa">0</span></strong> &nbsp;|&nbsp;
@@ -183,18 +199,22 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Thời gian bắt đầu</label>
-                        <input class="form-input" type="datetime-local" name="ThoiGianBatDau_KyThi" id="f_batdau">
+                        <input class="form-input" type="datetime-local" name="ThoiGianBatDau_KyThi" id="f_batdau"
+                               onchange="clearErr('err_thoigian_khoang')">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Thời gian kết thúc</label>
-                        <input class="form-input" type="datetime-local" name="ThoiGianKetThuc_KyThi" id="f_ketthuc">
+                        <input class="form-input" type="datetime-local" name="ThoiGianKetThuc_KyThi" id="f_ketthuc"
+                               onchange="clearErr('err_thoigian_khoang')">
                     </div>
                 </div>
+                <span class="field-error" id="err_thoigian_khoang"></span>
 
                 <div class="form-group">
                     <label class="form-label">Thời gian làm bài (phút) <span class="required">*</span></label>
                     <input class="form-input" type="number" name="ThoiGianLamBai_KyThi" id="f_thoigian"
-                           min="1" max="300" placeholder="VD: 45" required>
+                           min="1" max="300" placeholder="VD: 45" oninput="clearErr('err_thoigian')">
+                    <span class="field-error" id="err_thoigian"></span>
                 </div>
 
                 <div class="modal-section" style="margin-top:8px">Số câu hỏi</div>
@@ -203,17 +223,17 @@
                     <div class="form-group">
                         <label class="form-label">4 phương án <span class="required">*</span></label>
                         <input class="form-input" type="number" name="SoCauHoiTracNghiem4PhuongAn_KyThi"
-                               id="f_so4pa" min="0" value="0" required oninput="calcDiem();recheck()">
+                               id="f_so4pa" min="0" value="0" oninput="calcDiem();recheck()">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Đúng / Sai <span class="required">*</span></label>
                         <input class="form-input" type="number" name="SoCauHoiTracNghiemDungSai_KyThi"
-                               id="f_sods" min="0" value="0" required oninput="calcDiem();recheck()">
+                               id="f_sods" min="0" value="0" oninput="calcDiem();recheck()">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Trả lời ngắn <span class="required">*</span></label>
                         <input class="form-input" type="number" name="SoCauHoiTracNghiemTraLoiNgan_KyThi"
-                               id="f_songan" min="0" value="0" required oninput="calcDiem();recheck()">
+                               id="f_songan" min="0" value="0" oninput="calcDiem();recheck()">
                     </div>
                 </div>
 
@@ -223,21 +243,32 @@
                     <div class="form-group">
                         <label class="form-label">4 phương án <span class="required">*</span></label>
                         <input class="form-input" type="number" name="PhanBoDiemTracNghiem4PhuongAn_KyThi"
-                               id="f_d4pa" min="0" max="10" step="0.25" value="0" required oninput="calcDiem()">
+                               id="f_d4pa" min="0" max="10" step="0.25" value="0" oninput="calcDiem()">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Đúng / Sai <span class="required">*</span></label>
                         <input class="form-input" type="number" name="PhanBoDiemTracNghiemDungSai_KyThi"
-                               id="f_dds" min="0" max="10" step="0.25" value="0" required oninput="calcDiem()">
+                               id="f_dds" min="0" max="10" step="0.25" value="0" oninput="calcDiem()">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Trả lời ngắn <span class="required">*</span></label>
                         <input class="form-input" type="number" name="PhanBoDiemTracNghiemTraLoiNgan_KyThi"
-                               id="f_dngan" min="0" max="10" step="0.25" value="0" required oninput="calcDiem()">
+                               id="f_dngan" min="0" max="10" step="0.25" value="0" oninput="calcDiem()">
                     </div>
                 </div>
                 <div class="score-hint">Tổng điểm hiện tại:
                     <span id="totalDiem" class="err">0</span> / 10
+                </div>
+                <span class="field-error" id="err_diem"></span>
+
+                <div class="modal-section" style="margin-top:8px">Chế độ xem kết quả</div>
+                <div class="form-group">
+                    <label class="form-label">Học sinh được phép xem <span class="required">*</span></label>
+                    <select class="form-select" name="CheDo_XemKetQua_KyThi" id="f_chedo">
+                        <option value="1">Chế độ 1 – Xem điểm, bài làm và đáp án đúng</option>
+                        <option value="2">Chế độ 2 – Xem điểm và bài làm (không có đáp án)</option>
+                        <option value="3">Chế độ 3 – Chỉ xem điểm (không xem lại bài)</option>
+                    </select>
                 </div>
             </div>
 
@@ -334,11 +365,80 @@
         document.getElementById('hint-warn').textContent = warns.length ? '⚠ ' + warns.join(', ') : '';
     }
 
+    function clearErr(id) {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = ''; }
+        // xoá viền đỏ của input tương ứng (nếu có)
+        const fieldId = id.replace('err_', 'f_');
+        const field = document.getElementById(fieldId);
+        if (field) field.classList.remove('input-invalid');
+    }
+
+    function setErr(errId, msg, fieldId) {
+        const el = document.getElementById(errId);
+        if (el) el.textContent = msg;
+        if (fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field) field.classList.add('input-invalid');
+        }
+    }
+
+    function clientValidate() {
+        let ok = true;
+
+        // Xoá toàn bộ lỗi cũ
+        document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+        document.querySelectorAll('.input-invalid').forEach(el => el.classList.remove('input-invalid'));
+
+        const req = [
+            { id: 'f_ten',      err: 'err_ten',      msg: 'Vui lòng nhập tên kỳ thi.' },
+            { id: 'f_khoi',     err: 'err_khoi',     msg: 'Vui lòng chọn khối lớp.' },
+            { id: 'f_mon',      err: 'err_mon',       msg: 'Vui lòng chọn môn học.' },
+            { id: 'f_lophoc',   err: 'err_lophoc',   msg: 'Vui lòng chọn lớp học.' },
+            { id: 'f_chude',    err: 'err_chude',     msg: 'Vui lòng chọn chủ đề.' },
+            { id: 'f_dethi',    err: 'err_dethi',     msg: 'Vui lòng chọn đề thi.' },
+            { id: 'f_thoigian', err: 'err_thoigian', msg: 'Vui lòng nhập thời gian làm bài (phút).' },
+        ];
+
+        req.forEach(({ id, err, msg }) => {
+            const val = (document.getElementById(id)?.value || '').trim();
+            if (!val) { setErr(err, msg, id); ok = false; }
+        });
+
+        // Kiểm tra thời gian kết thúc >= bắt đầu
+        const bd = document.getElementById('f_batdau').value;
+        const kt = document.getElementById('f_ketthuc').value;
+        if (bd && kt && kt < bd) {
+            setErr('err_thoigian_khoang', 'Thời gian kết thúc phải sau thời gian bắt đầu.', null);
+            ok = false;
+        }
+
+        // Kiểm tra tổng điểm = 10
+        const total = (parseFloat(document.getElementById('f_d4pa').value)  || 0)
+                    + (parseFloat(document.getElementById('f_dds').value)   || 0)
+                    + (parseFloat(document.getElementById('f_dngan').value) || 0);
+        if (Math.abs(total - 10) >= 0.001) {
+            setErr('err_diem', `Tổng điểm phải bằng 10 (hiện tại: ${Math.round(total * 100) / 100}).`, null);
+            ok = false;
+        }
+
+        // Cuộn đến lỗi đầu tiên trong modal
+        if (!ok) {
+            const first = document.querySelector('#modalForm .field-error:not(:empty)');
+            if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        return ok;
+    }
+
     function resetForm() {
         ['f_ten','f_mota','f_batdau','f_ketthuc'].forEach(id => document.getElementById(id).value = '');
         ['f_khoi','f_mon','f_lophoc','f_chude','f_dethi'].forEach(id => document.getElementById(id).value = '');
         ['f_so4pa','f_sods','f_songan','f_d4pa','f_dds','f_dngan'].forEach(id => document.getElementById(id).value = 0);
         document.getElementById('f_thoigian').value = '';
+        document.getElementById('f_chedo').value = 1;
+        document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+        document.querySelectorAll('.input-invalid').forEach(el => el.classList.remove('input-invalid'));
         cascadeFilter();
         calcDiem();
     }
@@ -347,6 +447,7 @@
         document.getElementById('modalTitle').textContent = 'Tạo kỳ thi mới';
         document.getElementById('modalForm').action       = storeUrl;
         document.getElementById('formMethod').value       = 'POST';
+        document.getElementById('formEditId').value       = '';
         document.getElementById('submitBtn').textContent  = 'Tạo';
         resetForm();
         document.getElementById('modalOverlay').style.display = 'flex';
@@ -357,6 +458,7 @@
         document.getElementById('modalTitle').textContent = 'Sửa kỳ thi';
         document.getElementById('modalForm').action       = updateBase + '/' + kt.ID_KyThi;
         document.getElementById('formMethod').value       = 'PUT';
+        document.getElementById('formEditId').value       = kt.ID_KyThi;
         document.getElementById('submitBtn').textContent  = 'Cập nhật';
 
         document.getElementById('f_ten').value      = kt.Ten_KyThi   || '';
@@ -381,6 +483,7 @@
         document.getElementById('f_lophoc').value = kt.ID_LopHoc  || '';
         document.getElementById('f_chude').value  = kt.ID_ChuDe   || '';
         document.getElementById('f_dethi').value  = kt.ID_MaDeThi || '';
+        document.getElementById('f_chedo').value  = kt.CheDo_XemKetQua_KyThi || 1;
 
         calcDiem();
         loadDeThiCount();
@@ -404,6 +507,67 @@
 
     cascadeFilter();
     calcDiem();
+
+    // Khôi phục modal sau khi server trả về lỗi validation (withInput)
+    @if ($errors->any())
+    (function () {
+        const o = @json([
+            'Ten_KyThi'                             => old('Ten_KyThi', ''),
+            'MoTa_KyThi'                            => old('MoTa_KyThi', ''),
+            'ID_KhoiLop'                            => old('ID_KhoiLop', ''),
+            'ID_MonHoc'                             => old('ID_MonHoc', ''),
+            'ID_LopHoc'                             => old('ID_LopHoc', ''),
+            'ID_ChuDe'                              => old('ID_ChuDe', ''),
+            'ID_MaDeThi'                            => old('ID_MaDeThi', ''),
+            'ThoiGianBatDau_KyThi'                 => old('ThoiGianBatDau_KyThi', ''),
+            'ThoiGianKetThuc_KyThi'                => old('ThoiGianKetThuc_KyThi', ''),
+            'ThoiGianLamBai_KyThi'                 => old('ThoiGianLamBai_KyThi', ''),
+            'SoCauHoiTracNghiem4PhuongAn_KyThi'    => old('SoCauHoiTracNghiem4PhuongAn_KyThi', 0),
+            'SoCauHoiTracNghiemDungSai_KyThi'      => old('SoCauHoiTracNghiemDungSai_KyThi', 0),
+            'SoCauHoiTracNghiemTraLoiNgan_KyThi'   => old('SoCauHoiTracNghiemTraLoiNgan_KyThi', 0),
+            'PhanBoDiemTracNghiem4PhuongAn_KyThi'  => old('PhanBoDiemTracNghiem4PhuongAn_KyThi', 0),
+            'PhanBoDiemTracNghiemDungSai_KyThi'    => old('PhanBoDiemTracNghiemDungSai_KyThi', 0),
+            'PhanBoDiemTracNghiemTraLoiNgan_KyThi' => old('PhanBoDiemTracNghiemTraLoiNgan_KyThi', 0),
+            '_method'                               => old('_method', 'POST'),
+            '_edit_id'                              => old('_edit_id', ''),
+        ]);
+
+        const isPut = o._method === 'PUT' && o._edit_id;
+        document.getElementById('modalTitle').textContent = isPut ? 'Sửa kỳ thi' : 'Tạo kỳ thi mới';
+        document.getElementById('modalForm').action       = isPut ? updateBase + '/' + o._edit_id : storeUrl;
+        document.getElementById('formMethod').value       = isPut ? 'PUT' : 'POST';
+        document.getElementById('formEditId').value       = o._edit_id || '';
+        document.getElementById('submitBtn').textContent  = isPut ? 'Cập nhật' : 'Tạo';
+
+        document.getElementById('f_ten').value      = o.Ten_KyThi;
+        document.getElementById('f_mota').value     = o.MoTa_KyThi;
+        document.getElementById('f_thoigian').value = o.ThoiGianLamBai_KyThi;
+        document.getElementById('f_so4pa').value    = o.SoCauHoiTracNghiem4PhuongAn_KyThi;
+        document.getElementById('f_sods').value     = o.SoCauHoiTracNghiemDungSai_KyThi;
+        document.getElementById('f_songan').value   = o.SoCauHoiTracNghiemTraLoiNgan_KyThi;
+        document.getElementById('f_d4pa').value     = o.PhanBoDiemTracNghiem4PhuongAn_KyThi;
+        document.getElementById('f_dds').value      = o.PhanBoDiemTracNghiemDungSai_KyThi;
+        document.getElementById('f_dngan').value    = o.PhanBoDiemTracNghiemTraLoiNgan_KyThi;
+
+        if (o.ThoiGianBatDau_KyThi)
+            document.getElementById('f_batdau').value  = String(o.ThoiGianBatDau_KyThi).replace(' ', 'T').substring(0, 16);
+        if (o.ThoiGianKetThuc_KyThi)
+            document.getElementById('f_ketthuc').value = String(o.ThoiGianKetThuc_KyThi).replace(' ', 'T').substring(0, 16);
+
+        document.getElementById('f_khoi').value = o.ID_KhoiLop;
+        document.getElementById('f_mon').value  = o.ID_MonHoc;
+        cascadeFilter();
+
+        document.getElementById('f_lophoc').value = o.ID_LopHoc;
+        document.getElementById('f_chude').value  = o.ID_ChuDe;
+        document.getElementById('f_dethi').value  = o.ID_MaDeThi;
+
+        calcDiem();
+        if (o.ID_MaDeThi) loadDeThiCount();
+
+        document.getElementById('modalOverlay').style.display = 'flex';
+    })();
+    @endif
 </script>
 <script src="{{ asset('assets/js/layout.js') }}"></script>
 </body>

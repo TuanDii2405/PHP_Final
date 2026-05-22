@@ -110,9 +110,11 @@
             <span class="modal-header-title" id="modalTitle">Tạo kỳ thi mới</span>
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
-        <form id="modalForm" method="POST" action="{{ route('admin.ky-thi.store') }}">
+        <form id="modalForm" method="POST" action="{{ route('admin.ky-thi.store') }}"
+              novalidate onsubmit="return clientValidate()">
             @csrf
             <input type="hidden" name="_method" id="formMethod" value="POST">
+            <input type="hidden" name="_edit_id" id="formEditId" value="">
 
             <div class="modal-body">
                 {{-- Thông tin cơ bản --}}
@@ -318,10 +320,37 @@
         calcDiem();
     }
 
+    function clientValidate() {
+        if (!document.getElementById('f_ten').value.trim()) {
+            alert('Vui lòng nhập tên kỳ thi.'); return false;
+        }
+        if (!document.getElementById('f_lophoc').value) {
+            alert('Vui lòng chọn lớp học.'); return false;
+        }
+        if (!document.getElementById('f_chude').value) {
+            alert('Vui lòng chọn chủ đề.'); return false;
+        }
+        if (!document.getElementById('f_dethi').value) {
+            alert('Vui lòng chọn đề thi.'); return false;
+        }
+        if (!document.getElementById('f_thoigian').value) {
+            alert('Vui lòng nhập thời gian làm bài.'); return false;
+        }
+        const total = (parseFloat(document.getElementById('f_d4pa').value)  || 0)
+                    + (parseFloat(document.getElementById('f_dds').value)   || 0)
+                    + (parseFloat(document.getElementById('f_dngan').value) || 0);
+        if (Math.abs(total - 10) > 0.001) {
+            alert('Tổng phân bổ điểm phải bằng 10 (hiện tại: ' + (Math.round(total * 100) / 100) + ').');
+            return false;
+        }
+        return true;
+    }
+
     function openAdd() {
         document.getElementById('modalTitle').textContent = 'Tạo kỳ thi mới';
         document.getElementById('modalForm').action       = storeUrl;
         document.getElementById('formMethod').value       = 'POST';
+        document.getElementById('formEditId').value       = '';
         document.getElementById('submitBtn').textContent  = 'Tạo';
         resetForm();
         document.getElementById('modalOverlay').style.display = 'flex';
@@ -332,6 +361,7 @@
         document.getElementById('modalTitle').textContent = 'Sửa kỳ thi';
         document.getElementById('modalForm').action       = updateBase + '/' + kt.ID_KyThi;
         document.getElementById('formMethod').value       = 'PUT';
+        document.getElementById('formEditId').value       = kt.ID_KyThi;
         document.getElementById('submitBtn').textContent  = 'Cập nhật';
 
         document.getElementById('f_ten').value     = kt.Ten_KyThi   || '';
@@ -416,6 +446,48 @@
     // Khởi tạo cascade khi load trang
     cascadeFilter();
     calcDiem();
+
+    @if ($errors->any())
+    // Khôi phục modal sau lỗi server-side validation
+    (function restoreModal() {
+        const editId = '{{ old('_edit_id') }}';
+        if (editId) {
+            document.getElementById('modalTitle').textContent = 'Sửa kỳ thi';
+            document.getElementById('modalForm').action       = updateBase + '/' + editId;
+            document.getElementById('formMethod').value       = 'PUT';
+            document.getElementById('formEditId').value       = editId;
+            document.getElementById('submitBtn').textContent  = 'Cập nhật';
+        } else {
+            document.getElementById('modalTitle').textContent = 'Tạo kỳ thi mới';
+            document.getElementById('modalForm').action       = storeUrl;
+            document.getElementById('formMethod').value       = 'POST';
+            document.getElementById('formEditId').value       = '';
+            document.getElementById('submitBtn').textContent  = 'Tạo';
+        }
+        document.getElementById('f_ten').value      = @json(old('Ten_KyThi', ''));
+        document.getElementById('f_mota').value     = @json(old('MoTa_KyThi', ''));
+        document.getElementById('f_thoigian').value = @json(old('ThoiGianLamBai_KyThi', ''));
+        document.getElementById('f_so4pa').value    = @json(old('SoCauHoiTracNghiem4PhuongAn_KyThi', 0));
+        document.getElementById('f_sods').value     = @json(old('SoCauHoiTracNghiemDungSai_KyThi', 0));
+        document.getElementById('f_songan').value   = @json(old('SoCauHoiTracNghiemTraLoiNgan_KyThi', 0));
+        document.getElementById('f_d4pa').value     = @json(old('PhanBoDiemTracNghiem4PhuongAn_KyThi', 0));
+        document.getElementById('f_dds').value      = @json(old('PhanBoDiemTracNghiemDungSai_KyThi', 0));
+        document.getElementById('f_dngan').value    = @json(old('PhanBoDiemTracNghiemTraLoiNgan_KyThi', 0));
+        const bd = @json(old('ThoiGianBatDau_KyThi', ''));
+        const kt = @json(old('ThoiGianKetThuc_KyThi', ''));
+        document.getElementById('f_batdau').value   = bd ? bd.replace(' ', 'T').substring(0, 16) : '';
+        document.getElementById('f_ketthuc').value  = kt ? kt.replace(' ', 'T').substring(0, 16) : '';
+        document.getElementById('f_khoi').value     = @json(old('ID_KhoiLop', ''));
+        document.getElementById('f_mon').value      = @json(old('ID_MonHoc', ''));
+        cascadeFilter();
+        document.getElementById('f_lophoc').value   = @json(old('ID_LopHoc', ''));
+        document.getElementById('f_chude').value    = @json(old('ID_ChuDe', ''));
+        document.getElementById('f_dethi').value    = @json(old('ID_MaDeThi', ''));
+        calcDiem();
+        loadDeThiCount();
+        document.getElementById('modalOverlay').style.display = 'flex';
+    })();
+    @endif
 </script>
 <script src="{{ asset('assets/js/layout.js') }}"></script>
 </body>

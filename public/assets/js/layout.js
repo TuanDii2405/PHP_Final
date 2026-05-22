@@ -472,12 +472,16 @@
     banner.innerHTML =
       '&#9888; Đang xem dưới vai trò <b>' + roleLabel + '</b>: <b>' + name + '</b>' +
       ' &nbsp;—&nbsp; ' +
-      '<a href="/admin/impersonate-back" style="color:#fff;font-weight:700;text-decoration:underline">' +
-      'Quay lại Admin</a>';
+      '<button onclick="impersonateBack()" style="background:none;border:none;color:#fff;font-weight:700;text-decoration:underline;cursor:pointer;font-size:13px;padding:0">' +
+      'Quay lại Admin</button>';
     document.body.prepend(banner);
     document.body.style.paddingTop = (document.body.style.paddingTop
       ? parseInt(document.body.style.paddingTop) + 36 : 36) + 'px';
   }
+
+  window.impersonateBack = function () {
+    window.location.href = '/admin/impersonate-back';
+  };
 
   /* ── Auto-init khi trang load xong ── */
   document.addEventListener("DOMContentLoaded", function () {

@@ -157,16 +157,6 @@ php artisan key:generate
 
 Lệnh này tự ghi `APP_KEY=base64:...` vào file `.env`.
 
-### 5.4 Tạo bảng Session
-
-Dự án dùng `SESSION_DRIVER=database`. Chạy migration để tạo bảng session:
-
-```powershell
-php artisan migrate
-```
-
-> Lệnh này tạo các bảng `sessions`, `cache`, `jobs` trong database. **Không** tạo bảng nghiệp vụ (bảng đó đã có trong file SQL ở bước 6).
-
 ---
 
 ## 6. Nhập cơ sở dữ liệu
@@ -231,7 +221,7 @@ Mở trình duyệt, truy cập: `http://127.0.0.1:8000`
 | Giáo viên | `giaovien`    | `gv1234`    |
 | Học sinh  | `hocsinh`     | `hs123`    |
 
-> Có thể đăng nhập bằng **email** hoặc **số điện thoại** của bất kỳ tài khoản nào trong database.
+> Đăng nhập bằng **email** của tài khoản, hoặc dùng alias tắt: `admin`, `giaovien`, `hocsinh`.
 
 ---
 
@@ -256,10 +246,6 @@ MySQL chưa chạy. Mở XAMPP Control Panel → nhấn **Start** bên cạnh **
 ### Lỗi: `No application encryption key has been specified`
 
 Chưa sinh APP_KEY. Chạy: `php artisan key:generate`
-
-### Lỗi: `Table 'school_exam_db.sessions' doesn't exist`
-
-Chưa chạy migration. Chạy: `php artisan migrate`
 
 ### Trang trắng hoặc lỗi 500 sau khi import SQL
 
@@ -287,9 +273,8 @@ npm install
 copy .env.example .env
 # → Mở .env, đổi DB_CONNECTION=mysql, thêm DB_DATABASE=school_exam_db
 
-# 4. Sinh key + tạo bảng session
+# 4. Sinh key
 php artisan key:generate
-php artisan migrate
 
 # 5. Import database_school_exam.sql qua phpMyAdmin (xem mục 6)
 
