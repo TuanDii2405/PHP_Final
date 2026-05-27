@@ -99,17 +99,17 @@ Mở **Terminal** (PowerShell hoặc Command Prompt) và chạy:
 
 ```powershell
 cd C:\xampp\htdocs
-git clone <URL_REPO> PHP_FinalExam
-cd PHP_FinalExam
+git clone <URL_REPO> PHP_Final
+cd PHP_Final
 ```
 
-> Nếu đã có thư mục `PHP_FinalExam` rồi thì bỏ qua bước clone, chỉ cần `cd C:\xampp\htdocs\PHP_FinalExam`.
+> Nếu đã có thư mục `PHP_Final` rồi thì bỏ qua bước clone, chỉ cần `cd C:\xampp\htdocs\PHP_Final`.
 
 ---
 
 ## 4. Cài đặt dự án
 
-Đảm bảo đang ở trong thư mục `C:\xampp\htdocs\PHP_FinalExam`, sau đó chạy tuần tự:
+Đảm bảo đang ở trong thư mục `C:\xampp\htdocs\PHP_Final`, sau đó chạy tuần tự:
 
 ```powershell
 # Cài PHP dependencies
@@ -137,7 +137,7 @@ Mở file `.env` trong VS Code và sửa các dòng sau:
 
 ```env
 APP_NAME="PHP FinalExam"
-APP_URL=http://localhost/PHP_FinalExam/public
+APP_URL=http://localhost/PHP_Final/public
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -208,7 +208,7 @@ npm run build
 1. Đảm bảo **Apache** và **MySQL** đang **Running** trong XAMPP Control Panel.
 2. Mở trình duyệt, truy cập:
    ```
-   http://localhost/PHP_FinalExam/public
+   http://localhost/PHP_Final/public
    ```
 
 ### Cách 2: Dùng PHP built-in server (Phát triển nhanh)
@@ -228,7 +228,7 @@ Mở trình duyệt, truy cập: `http://127.0.0.1:8000`
 | Vai trò   | Tên đăng nhập | Mật khẩu   |
 | --------- | ------------- | ---------- |
 | Admin     | `admin`       | `admin123` |
-| Giáo viên | `giaovien`    | `gv1234`    |
+| Giáo viên | `giaovien`    | `gv123`     |
 | Học sinh  | `hocsinh`     | `hs123`    |
 
 > Có thể đăng nhập bằng **email** hoặc **số điện thoại** của bất kỳ tài khoản nào trong database.
@@ -277,7 +277,7 @@ Chưa build Vite. Chạy: `npm run build`
 
 ```powershell
 # 1. Vào thư mục dự án
-cd C:\xampp\htdocs\PHP_FinalExam
+cd C:\xampp\htdocs\PHP_Final
 
 # 2. Cài dependencies
 composer install
@@ -297,6 +297,6 @@ php artisan migrate
 npm run build
 
 # 7. Mở trình duyệt
-# XAMPP: http://localhost/PHP_FinalExam/public
+# XAMPP: http://localhost/PHP_Final/public
 # hoặc chạy: php artisan serve  →  http://127.0.0.1:8000
 ```

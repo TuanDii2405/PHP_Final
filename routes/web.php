@@ -19,6 +19,11 @@ Route::post('/dang-ky',     [AuthController::class, 'register']);
 Route::get('/doi-mat-khau', [AuthController::class, 'showDoiMatKhau'])->name('doi-mat-khau');
 Route::post('/doi-mat-khau',[AuthController::class, 'doiMatKhau']);
 
+Route::get('/auth/google',           [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/auth/google/callback',  [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+Route::get('/auth/google/hoan-tat',  [AuthController::class, 'showGoogleComplete'])->name('auth.google.complete');
+Route::post('/auth/google/hoan-tat', [AuthController::class, 'googleComplete']);
+
 // Admin
 Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin'])->group(function () {
     Route::get('/',           [AdminController::class, 'dashboard'])->name('dashboard');

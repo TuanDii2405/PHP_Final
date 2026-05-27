@@ -145,6 +145,61 @@
         margin-right: 6px;
     }
 
+    .btn-google {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px;
+        background: #ffffff;
+        color: #3c4043;
+        border: 1.5px solid #dbe9ff;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .btn-google:hover {
+        background: #f8fbff;
+        box-shadow: 0 4px 12px rgba(31,90,179,0.15);
+        border-color: #9fc0ea;
+    }
+
+    .btn-google img {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+    }
+
+    .divider-text {
+        text-align: center;
+        margin: 15px 0;
+        position: relative;
+    }
+
+    .divider-text::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 100%;
+        height: 1px;
+        background: #dbe9ff;
+        z-index: 1;
+    }
+
+    .divider-text span {
+        background: #fff;
+        padding: 0 10px;
+        color: #5377a8;
+        font-size: 13px;
+        position: relative;
+        z-index: 2;
+    }
+
     .auth-links {
         margin-top: 18px;
         text-align: center;
@@ -223,6 +278,15 @@
                     <i class="bi bi-box-arrow-in-right"></i>Đăng nhập
                 </button>
             </form>
+
+            <div class="divider-text">
+                <span>Hoặc</span>
+            </div>
+
+            <a href="{{ route('auth.google') }}" class="btn-google">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo">
+                Đăng nhập bằng Google
+            </a>
 
             <div class="auth-links">
                 <a href="{{ route('register') }}"><i class="bi bi-person-plus"></i>Đăng ký tài khoản</a>

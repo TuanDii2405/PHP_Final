@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -347,6 +349,118 @@ class AuthController extends Controller
 
         return redirect()->route('login')
             ->with('success', 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập.');
+    }
+
+    public function redirectToGoogle(): RedirectResponse
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback(Request $request): RedirectResponse
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+        } catch (\Throwable $th) {
+            return redirect()->route('login')->with('error', 'Đăng nhập bằng Google thất bại. Vui lòng thử lại.');
+        }
+
+        $email = strtolower((string)$googleUser->getEmail());
+
+        $user = DB::selectOne(
+            'SELECT ID_User, Pass_User, PhanQuyen_User, HoVaTen_User, TrangThaiHoatDong_User
+             FROM `User`
+             WHERE LOWER(EmailCaNhan_User) = ?
+             ORDER BY ID_User ASC
+             LIMIT 1',
+            [$email]
+        );
+
+        if ($user) {
+            if (($user->TrangThaiHoatDong_User ?? '') === 'pending') {
+                return redirect()->route('login')->with('error', 'Tài khoản đang chờ admin duyệt. Vui lòng thử lại sau.');
+            }
+
+            if (($user->TrangThaiHoatDong_User ?? '') !== 'active') {
+                return redirect()->route('login')->with('error', 'Tài khoản hiện không hoạt động.');
+            }
+
+            $request->session()->put('auth', [
+                'id'        => (int) $user->ID_User,
+                'name'      => (string) $user->HoVaTen_User,
+                'role'      => (string) $user->PhanQuyen_User,
+                'logged_at' => now()->toIso8601String(),
+            ]);
+
+            return match ($user->PhanQuyen_User) {
+                'admin'   => redirect()->route('admin.dashboard'),
+                'teacher' => redirect()->route('teacher.dashboard'),
+                default   => redirect()->route('student.dashboard'),
+            };
+        }
+
+        $request->session()->put('google_new_user', [
+            'email' => $email,
+            'name'  => $googleUser->getName(),
+        ]);
+
+        return redirect()->route('auth.google.complete');
+    }
+
+    public function showGoogleComplete(Request $request): View|RedirectResponse
+    {
+        if ($request->session()->has('auth')) {
+            return $this->redirectHome($request);
+        }
+
+        if (!$request->session()->has('google_new_user')) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.google-complete-register', [
+            'google_user' => $request->session()->get('google_new_user')
+        ]);
+    }
+
+    public function googleComplete(Request $request): RedirectResponse
+    {
+        if (!$request->session()->has('google_new_user')) {
+            return redirect()->route('login');
+        }
+
+        $googleSession = $request->session()->get('google_new_user');
+        $email = $googleSession['email'];
+
+        $name = trim((string) $request->input('name', ''));
+        $dob = trim((string) $request->input('dob', ''));
+        $role = trim((string) $request->input('role', ''));
+
+        if (!$name || !$dob || !$role) {
+            return redirect()->route('auth.google.complete')
+                ->with('error', 'Vui lòng điền đầy đủ thông tin.');
+        }
+
+        if (!in_array($role, ['hocsinh', 'giaovien'], true)) {
+            return redirect()->route('auth.google.complete')
+                ->with('error', 'Vai trò không hợp lệ.');
+        }
+
+        $roleMap = ['hocsinh' => 'student', 'giaovien' => 'teacher'];
+        $randomPassword = password_hash(Str::random(16), PASSWORD_BCRYPT);
+
+        try {
+            DB::insert(
+                'INSERT INTO `User` (Pass_User, PhanQuyen_User, HoVaTen_User, NgayThangNamSinh_User, EmailCaNhan_User, TrangThaiHoatDong_User)
+                 VALUES (?, ?, ?, ?, ?, ?)',
+                [$randomPassword, $roleMap[$role], $name, $dob, $email, 'pending']
+            );
+        } catch (\Throwable $th) {
+            return redirect()->route('auth.google.complete')
+                ->with('error', 'Hệ thống tạm thời gián đoạn kết nối CSDL.');
+        }
+
+        $request->session()->forget('google_new_user');
+
+        return redirect()->route('login')->with('success', 'Hoàn tất đăng ký thành công! Tài khoản đang chờ admin duyệt.');
     }
 
     private function sendOtp(Request $request, object $user, bool $success = false): RedirectResponse
